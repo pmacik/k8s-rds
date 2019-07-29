@@ -11,8 +11,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	"github.com/aws/aws-sdk-go-v2/service/rds"
 	"github.com/pkg/errors"
-	"github.com/sorenmat/k8s-rds/crd"
-	"github.com/sorenmat/k8s-rds/provider"
+	"github.com/pmacik/k8s-rds/crd"
+	"github.com/pmacik/k8s-rds/provider"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )

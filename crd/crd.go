@@ -69,6 +69,7 @@ type DatabaseSpec struct {
 type DatabaseStatus struct {
 	State   string `json:"state,omitempty" description:"State of the deploy"`
 	Message string `json:"message,omitempty" description:"Detailed message around the state"`
+	DBConfigMap string `json:"dbConfigMap" description:"DB Connection Configuration"`
 }
 
 type DatabaseList struct {

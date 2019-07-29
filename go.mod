@@ -1,0 +1,42 @@
+module github.com/pmacik/k8s-rds
+
+go 1.12
+
+require (
+	github.com/aws/aws-sdk-go-v2 v2.0.0-preview.4+incompatible
+	github.com/davecgh/go-spew v1.1.0
+	github.com/ghodss/yaml v1.0.0
+	github.com/go-ini/ini v1.32.0
+	github.com/gogo/protobuf v1.0.0
+	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
+	github.com/golang/protobuf v1.0.0
+	github.com/google/btree v0.0.0-20180124185431-e89373fe6b4a
+	github.com/google/gofuzz v0.0.0-20170612174753-24818f796faf
+	github.com/googleapis/gnostic v0.1.0
+	github.com/gregjones/httpcache v0.0.0-20171119193500-2bcd89a1743f
+	github.com/hashicorp/golang-lru v0.0.0-20180201235237-0fb14efe8c47
+	github.com/howeyc/gopass v0.0.0-20170109162249-bf9dde6d0d2c
+	github.com/imdario/mergo v0.0.0-20180119215619-163f41321a19
+	github.com/inconshreveable/mousetrap v1.0.0
+	github.com/jmespath/go-jmespath v0.0.0-20160202185014-0b12d6b521d8
+	github.com/json-iterator/go v0.0.0-20180128090011-28452fcdec4e
+	github.com/juju/ratelimit v0.0.0-20171026090426-59fac5042749
+	github.com/mitchellh/go-homedir v0.0.0-20161203194507-b8bc1bf76747
+	github.com/petar/GoLLRB v0.0.0-20130427215148-53be0d36a84c
+	github.com/peterbourgon/diskv v2.0.1+incompatible
+	github.com/pkg/errors v0.8.0
+	github.com/pmezard/go-difflib v1.0.0
+	github.com/spf13/cobra v0.0.3
+	github.com/spf13/pflag v1.0.3
+	github.com/stretchr/testify v1.2.1
+	golang.org/x/crypto v0.0.0-20180214000028-650f4a345ab4
+	golang.org/x/net v0.0.0-20180208041118-f5dfe339be1d
+	golang.org/x/sys v0.0.0-20180202135801-37707fdb30a5
+	golang.org/x/text v0.0.0-20180208041248-4e4a3210bb54
+	gopkg.in/inf.v0 v0.9.0
+	gopkg.in/yaml.v2 v2.0.0
+	k8s.io/api v0.0.0-20180213175254-0d0b2f481328
+	k8s.io/apiextensions-apiserver v0.0.0-20180214104112-0784bf71e932
+	k8s.io/apimachinery v0.0.0-20180213174950-da3b134bab57
+	k8s.io/client-go v6.0.0+incompatible
+)
