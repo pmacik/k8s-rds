@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/pmacik/k8s-rds/crd"
-	"github.com/pmacik/k8s-rds/provider"
+	"github.com/pmacik/k8s-rds/pkg/crd"
+	"github.com/pmacik/k8s-rds/pkg/provider"
 	v1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"

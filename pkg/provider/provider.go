@@ -1,7 +1,7 @@
 package provider
 
 import (
-	"github.com/pmacik/k8s-rds/crd"
+	"github.com/pmacik/k8s-rds/pkg/crd"
 )
 
 // DatabaseProvider is the interface for creating and deleting databases
