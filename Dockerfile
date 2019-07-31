@@ -1,5 +1,4 @@
-FROM alpine
-MAINTAINER Soren Mathiasen <sorenm@mymessages.dk>
-RUN apk update && apk add ca-certificates && rm -rf /var/cache/apk/*
+FROM registry.access.redhat.com/ubi8/ubi
+MAINTAINER Pavel Macík <pavel.macik@gmail.com>
 ADD k8s-rds /k8s-rds
-#ENTRYPOINT ["/k8s-rds"]
+ENTRYPOINT ["/k8s-rds"]

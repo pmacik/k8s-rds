@@ -1,1 +1,4 @@
-/k8s-rds
+deploy/aws.secret.yaml
+
+k8s-rds
+vendor

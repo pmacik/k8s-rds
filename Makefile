@@ -3,10 +3,13 @@ IMAGE_NAME ?= quay.io/$(QUAY_USERNAME)/k8s-rds
 TAG ?= latest
 IMAGE = $(IMAGE_NAME):$(TAG)
 
+.PHONY: dep
+dep:
+	dep ensure -v
 
 .PHONY: build
 build:
-	go build
+	GO111MODULE=off go build
 
 .PHONY: build-image
 build-image: build
