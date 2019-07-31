@@ -61,3 +61,7 @@ undeploy-db:
 
 .PHONY: undeploy-all
 undeploy-all: undeploy-db undeploy-operator
+
+.PHONY: run-locally
+run-locally:
+	./k8s-rds --provider local
