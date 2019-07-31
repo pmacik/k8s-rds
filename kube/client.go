@@ -2,6 +2,7 @@ package kube
 
 import (
 	"log"
+	"os"
 
 	"github.com/mitchellh/go-homedir"
 	"k8s.io/client-go/kubernetes"
@@ -42,5 +43,10 @@ func home() string {
 }
 
 func Config() string {
-	return home() + "/.kube/config"
+	kubeconfig := os.Getenv("KUBECONFIG")
+	if kubeconfig != "" {
+		return kubeconfig
+	} else {
+		return home() + "/.kube/config"
+	}
 }
