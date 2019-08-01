@@ -1,0 +1,5 @@
+channels:
+- currentCSV: k8s-rds.v1.0.0
+  name: alpha
+defaultChannel: alpha
+packageName: k8s-rds
