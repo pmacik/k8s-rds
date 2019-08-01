@@ -13,7 +13,7 @@ type DatabaseProvider interface {
 }
 
 type ServiceProvider interface {
-	CreateService(namespace string, hostname string, internalname string) error
+	CreateService(namespace string, hostname string, internalname string, owner *crd.Database) error
 	DeleteService(namespace string, dbname string) error
 	GetSecret(namepspace string, pwname string, pwkey string) (string, error)
 }

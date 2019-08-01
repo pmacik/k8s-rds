@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/pkg/errors"
+	"github.com/pmacik/k8s-rds/pkg/crd"
 	"github.com/pmacik/k8s-rds/pkg/kube"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -31,7 +32,7 @@ func (k *RDS) createServiceObj(s *v1.Service, namespace string, hostname string,
 }
 
 // CreateService Creates or updates a service in Kubernetes with the new information
-func (k *RDS) CreateService(namespace string, hostname string, internalname string) error {
+func (k *RDS) CreateService(namespace string, hostname string, internalname string, owner *crd.Database) error {
 
 	// create a service in kubernetes that points to the AWS RDS instance
 	kubectl, err := kube.Client()
@@ -48,6 +49,13 @@ func (k *RDS) CreateService(namespace string, hostname string, internalname stri
 		create = true
 	}
 	s = k.createServiceObj(s, namespace, hostname, internalname)
+	ownerRef := metav1.OwnerReference{
+		APIVersion: crd.CRDVersion,
+		Kind:       crd.CRDKind,
+		Name:       owner.GetName(),
+		UID:        owner.GetUID(),
+	}
+	s.SetOwnerReferences([]metav1.OwnerReference{ownerRef})
 	if create {
 		_, err = serviceInterface.Create(s)
 	} else {

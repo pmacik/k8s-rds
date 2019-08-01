@@ -195,7 +195,7 @@ func handleCreateDatabase(db *crd.Database, crdclient *client.Crdclient, dbprovi
 		return err
 	}
 	log.Printf("Creating service '%v' for %v\n", db.Name, hostname)
-	err = r.CreateService(db.Namespace, hostname, db.Name)
+	err = r.CreateService(db.Namespace, hostname, db.Name, db)
 	if err != nil {
 		return err
 	}

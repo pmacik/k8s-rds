@@ -5,7 +5,8 @@ import (
 	"log"
 
 	"github.com/pkg/errors"
-	"k8s.io/api/core/v1"
+	"github.com/pmacik/k8s-rds/pkg/crd"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/kubernetes"
@@ -35,7 +36,7 @@ func (k *Kube) createServiceObj(s *v1.Service, namespace string, hostname string
 }
 
 // CreateService Creates or updates a service in Kubernetes with the new information
-func (k *Kube) CreateService(namespace string, hostname string, internalname string) error {
+func (k *Kube) CreateService(namespace string, hostname string, internalname string, owner *crd.Database) error {
 
 	// create a service in kubernetes that points to the AWS RDS instance
 	serviceInterface := k.Client.CoreV1().Services(namespace)

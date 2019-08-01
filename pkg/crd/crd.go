@@ -13,6 +13,7 @@ import (
 )
 
 const (
+	CRDKind     string = "Database"
 	CRDPlural   string = "databases"
 	CRDGroup    string = "k8s.io"
 	CRDVersion  string = "v1"
@@ -28,8 +29,8 @@ func CreateCRD(clientset apiextcs.Interface) error {
 			Version: CRDVersion,
 			Scope:   apiextv1beta1.NamespaceScoped,
 			Names: apiextv1beta1.CustomResourceDefinitionNames{
-				Plural: "databases",
-				Kind:   "Database",
+				Plural: CRDPlural,
+				Kind:   CRDKind,
 			},
 		},
 	}

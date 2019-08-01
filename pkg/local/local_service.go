@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/pkg/errors"
+	"github.com/pmacik/k8s-rds/pkg/crd"
 	"github.com/pmacik/k8s-rds/pkg/kube"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -31,7 +32,7 @@ func (k *Local) createServiceObj(s *v1.Service, namespace string, hostname strin
 }
 
 // CreateService Creates or updates a service in Kubernetes with the new information
-func (k *Local) CreateService(namespace string, hostname string, internalname string) error {
+func (k *Local) CreateService(namespace string, hostname string, internalname string, owner *crd.Database) error {
 	client, err := kube.Client()
 	if err != nil {
 		return err
