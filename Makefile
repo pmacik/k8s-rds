@@ -106,6 +106,8 @@ push-image:
 clean:
 	@rm -rvf k8s-rds
 
+## -- Install/Delete targets --
+
 .PHONY: install-operator
 ## Create secret, role, account for operator
 install-operator:
