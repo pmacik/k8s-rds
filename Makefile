@@ -125,6 +125,13 @@ uninstall-operator:
 deploy-operator:
 	$(Q)oc apply -f deploy/deployment-rbac.yaml
 
+
+.PHONY: redeploy-operator
+## Scale operator's deployment to 0 and back to 1 to re-deploy it
+redeploy-operator:
+	$(Q)oc scale --replicas=0 deploy k8s-rds -n $(NAMESPACE) \
+	&& oc scale --replicas=1 deploy k8s-rds -n $(NAMESPACE)
+
 .PHONY: undeploy-operator
 ## Delete deployment for operator
 undeploy-operator:
