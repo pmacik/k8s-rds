@@ -83,6 +83,8 @@ help: ## Credit: https://gist.github.com/prwhite/8168133#gistcomment-2749866
 dep:
 	$(Q)dep ensure $(V_FLAG)
 
+## -- Build targets --
+
 .PHONY: build
 ## Compile the operator for Linux/AMD64
 build:
@@ -103,6 +105,8 @@ push-image:
 ## Clean up 
 clean:
 	@rm -rvf k8s-rds
+
+## -- Install/Delete targets --
 
 .PHONY: install-operator
 ## Create secret, role, account for operator
