@@ -2,3 +2,5 @@ deploy/aws.secret.yaml
 
 k8s-rds
 vendor
+
+.vscode

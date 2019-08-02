@@ -36,7 +36,7 @@ func (k *Kube) createServiceObj(s *v1.Service, namespace string, hostname string
 }
 
 // CreateService Creates or updates a service in Kubernetes with the new information
-func (k *Kube) CreateService(namespace string, hostname string, internalname string, owner *crd.Database) error {
+func (k *Kube) CreateService(namespace string, hostname string, internalname string, owner *crd.Database) (*v1.Service, error) {
 
 	// create a service in kubernetes that points to the AWS RDS instance
 	serviceInterface := k.Client.CoreV1().Services(namespace)
@@ -56,7 +56,7 @@ func (k *Kube) CreateService(namespace string, hostname string, internalname str
 		_, err = serviceInterface.Update(s)
 	}
 
-	return err
+	return s, err
 }
 
 func (k *Kube) DeleteService(namespace string, dbname string) error {

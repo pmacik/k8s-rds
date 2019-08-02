@@ -32,37 +32,41 @@ func (k *RDS) createServiceObj(s *v1.Service, namespace string, hostname string,
 }
 
 // CreateService Creates or updates a service in Kubernetes with the new information
-func (k *RDS) CreateService(namespace string, hostname string, internalname string, owner *crd.Database) error {
+func (k *RDS) CreateService(namespace string, hostname string, internalname string, owner *crd.Database) (*v1.Service, error) {
 
 	// create a service in kubernetes that points to the AWS RDS instance
 	kubectl, err := kube.Client()
 	if err != nil {
-		return err
+		return nil, err
+	}
+	lbs := map[string]string{
+		"app": owner.GetName(),
 	}
 	serviceInterface := kubectl.CoreV1().Services(namespace)
 
 	s, sErr := serviceInterface.Get(hostname, metav1.GetOptions{})
-
 	create := false
 	if sErr != nil {
 		s = &v1.Service{}
+		s = k.createServiceObj(s, namespace, hostname, internalname)
+		s.SetLabels(lbs)
+		ownerRef := metav1.OwnerReference{
+			APIVersion: crd.CRDVersion,
+			Kind:       crd.CRDKind,
+			Name:       owner.GetName(),
+			UID:        owner.GetUID(),
+		}
+		s.SetOwnerReferences([]metav1.OwnerReference{ownerRef})
 		create = true
 	}
-	s = k.createServiceObj(s, namespace, hostname, internalname)
-	ownerRef := metav1.OwnerReference{
-		APIVersion: crd.CRDVersion,
-		Kind:       crd.CRDKind,
-		Name:       owner.GetName(),
-		UID:        owner.GetUID(),
-	}
-	s.SetOwnerReferences([]metav1.OwnerReference{ownerRef})
+
 	if create {
 		_, err = serviceInterface.Create(s)
 	} else {
 		_, err = serviceInterface.Update(s)
 	}
 
-	return err
+	return s, err
 }
 
 func (k *RDS) DeleteService(namespace string, dbname string) error {
@@ -79,15 +83,14 @@ func (k *RDS) DeleteService(namespace string, dbname string) error {
 	return nil
 }
 
-func (k *RDS) GetSecret(namespace string, name string, key string) (string, error) {
+func (k *RDS) GetSecret(namespace string, name string) (*v1.Secret, error) {
 	kubectl, err := kube.Client()
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	secret, err := kubectl.CoreV1().Secrets(namespace).Get(name, metav1.GetOptions{})
 	if err != nil {
-		return "", errors.Wrap(err, fmt.Sprintf("unable to fetch secret %v", name))
+		return nil, errors.Wrap(err, fmt.Sprintf("unable to fetch secret %v", name))
 	}
-	password := secret.Data[key]
-	return string(password), nil
+	return secret, nil
 }

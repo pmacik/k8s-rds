@@ -68,9 +68,10 @@ type DatabaseSpec struct {
 }
 
 type DatabaseStatus struct {
-	State   string `json:"state,omitempty" description:"State of the deploy"`
-	Message string `json:"message,omitempty" description:"Detailed message around the state"`
-	DBConfigMap string `json:"dbConfigMap" description:"DB Connection Configuration"`
+	State              string `json:"state,omitempty" description:"State of the deploy"`
+	Message            string `json:"message,omitempty" description:"Detailed message around the state"`
+	DBConnectionConfig string `json:"dbConfigMap" description:"Name of a Config Map with DB Connection Configuration"`
+	DBCredentials      string `json:"dbCredentials" description:"Name of the secret to hold DB Credentials"`
 }
 
 type DatabaseList struct {

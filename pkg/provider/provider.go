@@ -2,6 +2,7 @@ package provider
 
 import (
 	"github.com/pmacik/k8s-rds/pkg/crd"
+	v1 "k8s.io/api/core/v1"
 )
 
 // DatabaseProvider is the interface for creating and deleting databases
@@ -13,7 +14,7 @@ type DatabaseProvider interface {
 }
 
 type ServiceProvider interface {
-	CreateService(namespace string, hostname string, internalname string, owner *crd.Database) error
+	CreateService(namespace string, hostname string, internalname string, owner *crd.Database) (*v1.Service, error)
 	DeleteService(namespace string, dbname string) error
-	GetSecret(namepspace string, pwname string, pwkey string) (string, error)
+	GetSecret(namepspace string, pwname string) (*v1.Secret, error)
 }

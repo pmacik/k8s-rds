@@ -58,11 +58,11 @@ func (r *RDS) CreateDatabase(db *crd.Database) (string, error) {
 	}
 
 	log.Printf("getting secret: Name: %v Key: %v \n", db.Spec.Password.Name, db.Spec.Password.Key)
-	pw, err := r.GetSecret(db.Namespace, db.Spec.Password.Name, db.Spec.Password.Key)
+	svc, err := r.GetSecret(db.Namespace, db.Spec.Password.Name)
 	if err != nil {
 		return "", err
 	}
-	input := convertSpecToInput(db, subnetName, r.SecurityGroups, pw)
+	input := convertSpecToInput(db, subnetName, r.SecurityGroups, string(svc.Data[db.Spec.Password.Key]))
 
 	// search for the instance
 	log.Printf("Trying to find db instance %v\n", db.Spec.DBName)

@@ -3,6 +3,8 @@ kind: Database
 metadata:
   name: mydb
   namespace: default
+  labels:
+    app: mydb
 spec:
   class: db.t2.medium
   engine: postgres

@@ -152,7 +152,6 @@ deploy-db:
 undeploy-db:
 	$(Q)-oc delete -f deploy/db.yaml
 	$(Q)-oc delete -f deploy/db.secret.yaml
-	$(Q)-oc delete svc $(DB_NAME) -n $(NAMESPACE)
 
 .PHONY: undeploy-all
 ## Undeploy operator and related assets

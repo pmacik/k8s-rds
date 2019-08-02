@@ -8,15 +8,16 @@ import (
 	"github.com/pmacik/k8s-rds/pkg/client"
 	"github.com/pmacik/k8s-rds/pkg/crd"
 	"github.com/pmacik/k8s-rds/pkg/kube"
-	"github.com/pmacik/k8s-rds/pkg/local"
 	"github.com/pmacik/k8s-rds/pkg/provider"
 	"github.com/pmacik/k8s-rds/pkg/rds"
 	"github.com/spf13/cobra"
+	v1 "k8s.io/api/core/v1"
 	apiextcs "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
+	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
-
 	"k8s.io/client-go/tools/clientcmd"
 )
 
@@ -105,32 +106,81 @@ func execute(dbprovider string) {
 		cache.ResourceEventHandlerFuncs{
 			AddFunc: func(obj interface{}) {
 				db := obj.(*crd.Database)
-				client := client.CrdClient(crdcs, scheme, db.Namespace) // add the database namespace to the client
-				err = handleCreateDatabase(db, client, dbprovider)
+				provider, err := getProvider(db, dbprovider)
+				if err != nil {
+					log.Printf("unable to get DB provider %s: %v", dbprovider, err)
+					return
+				}
+				crdClient := client.CrdClient(crdcs, scheme, db.Namespace) // add the database namespace to the client
+				// create DB
+				hostname, err := handleCreateDatabase(db, crdClient, &provider)
 				if err != nil {
 					log.Printf("database creation failed: %v", err)
-					err := updateStatus(db, crd.DatabaseStatus{Message: fmt.Sprintf("%v", err), State: Failed}, client)
+					err := updateStatus(db.Name, crd.DatabaseStatus{Message: fmt.Sprintf("%v", err), State: Failed}, crdClient)
 					if err != nil {
 						log.Printf("database CRD status update failed: %v", err)
+						return
 					}
 				}
+				status := crd.DatabaseStatus{
+					Message:            "DB Created - creating service",
+					State:              "CreatingService",
+					DBConnectionConfig: "",
+					DBCredentials:      db.Spec.Password.Name,
+				}
+				err = updateStatus(db.Name, status, crdClient)
+				if err != nil {
+					log.Printf("Unable to update status: %v", err)
+					return
+				}
+				// create service
+				log.Printf("Creating service '%v' for %v\n", db.Name, hostname)
+				svc, err := provider.CreateService(db.Namespace, hostname, db.Name, db)
+				if err != nil {
+					if errors.IsAlreadyExists(err) {
+						log.Printf("Service %s already exists, moving on", db.Name)
+					} else {
+						log.Printf("Unable to create service: %v", err)
+						return
+					}
+				}
+				status.Message = "Service Created"
+				status.State = "CreatingConfigMap"
+				err = updateStatus(db.Name, status, crdClient)
+				if err != nil {
+					log.Printf("Unable to update status: %v", err)
+					return
+				}
+
+				//create config map
+				cfm, err := ensureConfigMap(db, svc)
+				status.Message = "ConfigMap Created"
+				status.State = "Completed"
+				status.DBConnectionConfig = cfm.GetName()
+				err = updateStatus(db.Name, status, crdClient)
+				if err != nil {
+					log.Printf("Unable to update status: %v", err)
+					return
+				}
+
+				log.Printf("Creation of database %v done\n", db.Name)
 			},
 			DeleteFunc: func(obj interface{}) {
 				db := obj.(*crd.Database)
 				log.Printf("deleting database: %s \n", db.Name)
 
-				r, err := getProvider(db, dbprovider)
+				provider, err := getProvider(db, dbprovider)
 				if err != nil {
-					log.Println(err)
+					log.Printf("unable to get DB provider %s: %v", dbprovider, err)
 					return
 				}
 
-				err = r.DeleteDatabase(db)
+				err = provider.DeleteDatabase(db)
 				if err != nil {
 					log.Println(err)
 				}
 
-				err = r.DeleteService(db.Namespace, db.Name)
+				err = provider.DeleteService(db.Namespace, db.Name)
 				if err != nil {
 					log.Println(err)
 				}
@@ -162,58 +212,70 @@ func getProvider(db *crd.Database, dbprovider string) (provider.DatabaseProvider
 		}
 		return r, nil
 
-	case "local":
+		/*case "local":
 		r, err := local.New(db, kubectl)
 		if err != nil {
 			return nil, err
 		}
-		return r, nil
+		return r, nil*/
 	}
 	return nil, fmt.Errorf("unable to find provider for %v", dbprovider)
 }
 
-func handleCreateDatabase(db *crd.Database, crdclient *client.Crdclient, dbprovider string) error {
-	if db.Status.State == "Created" {
-		log.Printf("database %v already created, skipping\n", db.Name)
-		return nil
-	}
+func handleCreateDatabase(db *crd.Database, crdclient *client.Crdclient, dbProvider *provider.DatabaseProvider) (string, error) {
 	// validate dbname is only alpha numeric
-	err := updateStatus(db, crd.DatabaseStatus{Message: "Creating", State: "Creating"}, crdclient)
+	err := updateStatus(db.Name, crd.DatabaseStatus{Message: "Creating", State: "Creating"}, crdclient)
 	if err != nil {
-		return fmt.Errorf("database CRD status update failed: %v", err)
+		return "", fmt.Errorf("database CRD status update failed: %v", err)
 	}
 
 	log.Println("trying to get kubectl")
 
-	r, err := getProvider(db, dbprovider)
+	hostname, err := (*dbProvider).CreateDatabase(db)
 	if err != nil {
-		return err
+		return "", err
 	}
-
-	hostname, err := r.CreateDatabase(db)
-	if err != nil {
-		return err
-	}
-	log.Printf("Creating service '%v' for %v\n", db.Name, hostname)
-	err = r.CreateService(db.Namespace, hostname, db.Name, db)
-	if err != nil {
-		return err
-	}
-
-	err = updateStatus(db, crd.DatabaseStatus{Message: "Created", State: "Created"}, crdclient)
-	if err != nil {
-		return err
-	}
-	log.Printf("Creation of database %v done\n", db.Name)
-	return nil
+	return hostname, nil
 }
 
-func updateStatus(db *crd.Database, status crd.DatabaseStatus, crdclient *client.Crdclient) error {
-	db, err := crdclient.Get(db.Name)
+func ensureConfigMap(db *crd.Database, svc *v1.Service) (*v1.ConfigMap, error) {
+	//Create a configMap
+	kubectl, err := kube.Client()
+	if err != nil {
+		return nil, err
+	}
+	configMapInterface := kubectl.CoreV1().ConfigMaps(db.Namespace)
+	cfm, cErr := configMapInterface.Get(db.Name, metav1.GetOptions{})
+
+	createCM := false
+	if cErr != nil {
+		cfm = &v1.ConfigMap{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      db.Name,
+				Namespace: db.Namespace,
+				Labels:    svc.ObjectMeta.Labels,
+			},
+			Data: map[string]string{
+				"DB_HOST": svc.Spec.ExternalName,
+				"DB_PORT": svc.Spec.Ports[0].TargetPort.String(),
+			},
+		}
+		createCM = true
+	}
+	cfm.SetOwnerReferences(svc.GetOwnerReferences())
+	if createCM {
+		_, err = configMapInterface.Create(cfm)
+	} else {
+		_, err = configMapInterface.Update(cfm)
+	}
+	return cfm, nil
+}
+
+func updateStatus(dbName string, status crd.DatabaseStatus, crdclient *client.Crdclient) error {
+	db, err := crdclient.Get(dbName)
 	if err != nil {
 		return err
 	}
-
 	db.Status = status
 	_, err = crdclient.Update(db)
 	if err != nil {
