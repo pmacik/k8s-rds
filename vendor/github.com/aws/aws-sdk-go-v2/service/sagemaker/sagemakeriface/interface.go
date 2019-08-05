@@ -69,6 +69,8 @@ type SageMakerAPI interface {
 
 	CreateEndpointConfigRequest(*sagemaker.CreateEndpointConfigInput) sagemaker.CreateEndpointConfigRequest
 
+	CreateHyperParameterTuningJobRequest(*sagemaker.CreateHyperParameterTuningJobInput) sagemaker.CreateHyperParameterTuningJobRequest
+
 	CreateModelRequest(*sagemaker.CreateModelInput) sagemaker.CreateModelRequest
 
 	CreateNotebookInstanceRequest(*sagemaker.CreateNotebookInstanceInput) sagemaker.CreateNotebookInstanceRequest
@@ -78,6 +80,8 @@ type SageMakerAPI interface {
 	CreatePresignedNotebookInstanceUrlRequest(*sagemaker.CreatePresignedNotebookInstanceUrlInput) sagemaker.CreatePresignedNotebookInstanceUrlRequest
 
 	CreateTrainingJobRequest(*sagemaker.CreateTrainingJobInput) sagemaker.CreateTrainingJobRequest
+
+	CreateTransformJobRequest(*sagemaker.CreateTransformJobInput) sagemaker.CreateTransformJobRequest
 
 	DeleteEndpointRequest(*sagemaker.DeleteEndpointInput) sagemaker.DeleteEndpointRequest
 
@@ -95,6 +99,8 @@ type SageMakerAPI interface {
 
 	DescribeEndpointConfigRequest(*sagemaker.DescribeEndpointConfigInput) sagemaker.DescribeEndpointConfigRequest
 
+	DescribeHyperParameterTuningJobRequest(*sagemaker.DescribeHyperParameterTuningJobInput) sagemaker.DescribeHyperParameterTuningJobRequest
+
 	DescribeModelRequest(*sagemaker.DescribeModelInput) sagemaker.DescribeModelRequest
 
 	DescribeNotebookInstanceRequest(*sagemaker.DescribeNotebookInstanceInput) sagemaker.DescribeNotebookInstanceRequest
@@ -103,9 +109,13 @@ type SageMakerAPI interface {
 
 	DescribeTrainingJobRequest(*sagemaker.DescribeTrainingJobInput) sagemaker.DescribeTrainingJobRequest
 
+	DescribeTransformJobRequest(*sagemaker.DescribeTransformJobInput) sagemaker.DescribeTransformJobRequest
+
 	ListEndpointConfigsRequest(*sagemaker.ListEndpointConfigsInput) sagemaker.ListEndpointConfigsRequest
 
 	ListEndpointsRequest(*sagemaker.ListEndpointsInput) sagemaker.ListEndpointsRequest
+
+	ListHyperParameterTuningJobsRequest(*sagemaker.ListHyperParameterTuningJobsInput) sagemaker.ListHyperParameterTuningJobsRequest
 
 	ListModelsRequest(*sagemaker.ListModelsInput) sagemaker.ListModelsRequest
 
@@ -117,11 +127,19 @@ type SageMakerAPI interface {
 
 	ListTrainingJobsRequest(*sagemaker.ListTrainingJobsInput) sagemaker.ListTrainingJobsRequest
 
+	ListTrainingJobsForHyperParameterTuningJobRequest(*sagemaker.ListTrainingJobsForHyperParameterTuningJobInput) sagemaker.ListTrainingJobsForHyperParameterTuningJobRequest
+
+	ListTransformJobsRequest(*sagemaker.ListTransformJobsInput) sagemaker.ListTransformJobsRequest
+
 	StartNotebookInstanceRequest(*sagemaker.StartNotebookInstanceInput) sagemaker.StartNotebookInstanceRequest
+
+	StopHyperParameterTuningJobRequest(*sagemaker.StopHyperParameterTuningJobInput) sagemaker.StopHyperParameterTuningJobRequest
 
 	StopNotebookInstanceRequest(*sagemaker.StopNotebookInstanceInput) sagemaker.StopNotebookInstanceRequest
 
 	StopTrainingJobRequest(*sagemaker.StopTrainingJobInput) sagemaker.StopTrainingJobRequest
+
+	StopTransformJobRequest(*sagemaker.StopTransformJobInput) sagemaker.StopTransformJobRequest
 
 	UpdateEndpointRequest(*sagemaker.UpdateEndpointInput) sagemaker.UpdateEndpointRequest
 

@@ -112,6 +112,14 @@ func (r CreateEndpointRequest) Send() (*CreateEndpointOutput, error) {
 // For an example, see Exercise 1: Using the K-Means Algorithm Provided by Amazon
 // SageMaker (http://docs.aws.amazon.com/sagemaker/latest/dg/ex1.html).
 //
+// If any of the models hosted at this endpoint get model data from an Amazon
+// S3 location, Amazon SageMaker uses AWS Security Token Service to download
+// model artifacts from the S3 path you provided. AWS STS is activated in your
+// IAM user account by default. If you previously deactivated AWS STS for a
+// region, you need to reactivate AWS STS for that region. For more information,
+// see Activating and Deactivating AWS STS i an AWS Region (http://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_temp_enable-regions.html)
+// in the AWS Identity and Access Management User Guide.
+//
 //    // Example sending a request using the CreateEndpointRequest method.
 //    req := client.CreateEndpointRequest(params)
 //    resp, err := req.Send()
@@ -206,6 +214,56 @@ func (c *SageMaker) CreateEndpointConfigRequest(input *CreateEndpointConfigInput
 	return CreateEndpointConfigRequest{Request: req, Input: input, Copy: c.CreateEndpointConfigRequest}
 }
 
+const opCreateHyperParameterTuningJob = "CreateHyperParameterTuningJob"
+
+// CreateHyperParameterTuningJobRequest is a API request type for the CreateHyperParameterTuningJob API operation.
+type CreateHyperParameterTuningJobRequest struct {
+	*aws.Request
+	Input *CreateHyperParameterTuningJobInput
+	Copy  func(*CreateHyperParameterTuningJobInput) CreateHyperParameterTuningJobRequest
+}
+
+// Send marshals and sends the CreateHyperParameterTuningJob API request.
+func (r CreateHyperParameterTuningJobRequest) Send() (*CreateHyperParameterTuningJobOutput, error) {
+	err := r.Request.Send()
+	if err != nil {
+		return nil, err
+	}
+
+	return r.Request.Data.(*CreateHyperParameterTuningJobOutput), nil
+}
+
+// CreateHyperParameterTuningJobRequest returns a request value for making API operation for
+// Amazon SageMaker Service.
+//
+// Starts a hyperparameter tuning job.
+//
+//    // Example sending a request using the CreateHyperParameterTuningJobRequest method.
+//    req := client.CreateHyperParameterTuningJobRequest(params)
+//    resp, err := req.Send()
+//    if err == nil {
+//        fmt.Println(resp)
+//    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateHyperParameterTuningJob
+func (c *SageMaker) CreateHyperParameterTuningJobRequest(input *CreateHyperParameterTuningJobInput) CreateHyperParameterTuningJobRequest {
+	op := &aws.Operation{
+		Name:       opCreateHyperParameterTuningJob,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &CreateHyperParameterTuningJobInput{}
+	}
+
+	output := &CreateHyperParameterTuningJobOutput{}
+	req := c.newRequest(op, input, output)
+	output.responseMetadata = aws.Response{Request: req}
+
+	return CreateHyperParameterTuningJobRequest{Request: req, Input: input, Copy: c.CreateHyperParameterTuningJobRequest}
+}
+
 const opCreateModel = "CreateModel"
 
 // CreateModelRequest is a API request type for the CreateModel API operation.
@@ -229,27 +287,32 @@ func (r CreateModelRequest) Send() (*CreateModelOutput, error) {
 // Amazon SageMaker Service.
 //
 // Creates a model in Amazon SageMaker. In the request, you name the model and
-// describe one or more containers. For each container, you specify the docker
-// image containing inference code, artifacts (from prior training), and custom
-// environment map that the inference code uses when you deploy the model into
-// production.
+// describe a primary container. For the primary container, you specify the
+// docker image containing inference code, artifacts (from prior training),
+// and custom environment map that the inference code uses when you deploy the
+// model for predictions.
 //
-// Use this API to create a model only if you want to use Amazon SageMaker hosting
-// services. To host your model, you create an endpoint configuration with the
-// CreateEndpointConfig API, and then create an endpoint with the CreateEndpoint
-// API.
+// Use this API to create a model if you want to use Amazon SageMaker hosting
+// services or run a batch transform job.
 //
-// Amazon SageMaker then deploys all of the containers that you defined for
-// the model in the hosting environment.
+// To host your model, you create an endpoint configuration with the CreateEndpointConfig
+// API, and then create an endpoint with the CreateEndpoint API. Amazon SageMaker
+// then deploys all of the containers that you defined for the model in the
+// hosting environment.
+//
+// To run a batch transform using your model, you start a job with the CreateTransformJob
+// API. Amazon SageMaker uses your model and your dataset to get inferences
+// which are then saved to a specified S3 location.
 //
 // In the CreateModel request, you must define a container with the PrimaryContainer
 // parameter.
 //
 // In the request, you also provide an IAM role that Amazon SageMaker can assume
 // to access model artifacts and docker image for deployment on ML compute hosting
-// instances. In addition, you also use the IAM role to manage permissions the
-// inference code needs. For example, if the inference code access any other
-// AWS resources, you grant necessary permissions via this role.
+// instances or for batch transform jobs. In addition, you also use the IAM
+// role to manage permissions the inference code needs. For example, if the
+// inference code access any other AWS resources, you grant necessary permissions
+// via this role.
 //
 //    // Example sending a request using the CreateModelRequest method.
 //    req := client.CreateModelRequest(params)
@@ -451,11 +514,20 @@ func (r CreatePresignedNotebookInstanceUrlRequest) Send() (*CreatePresignedNoteb
 // CreatePresignedNotebookInstanceUrlRequest returns a request value for making API operation for
 // Amazon SageMaker Service.
 //
-// Returns a URL that you can use to connect to the Juypter server from a notebook
+// Returns a URL that you can use to connect to the Jupyter server from a notebook
 // instance. In the Amazon SageMaker console, when you choose Open next to a
 // notebook instance, Amazon SageMaker opens a new tab showing the Jupyter server
 // home page from the notebook instance. The console uses this API to get the
 // URL and show the page.
+//
+// You can restrict access to this API and to the URL that it returns to a list
+// of IP addresses that you specify. To restrict access, attach an IAM policy
+// that denies access to this API unless the call comes from an IP address in
+// the specified list to every AWS Identity and Access Management user, group,
+// or role used to access the notebook instance. Use the NotIpAddress condition
+// operator and the aws:SourceIP condition context key to specify the list of
+// IP addresses that you want to have access to the notebook instance. For more
+// information, see nbi-ip-filter.
 //
 //    // Example sending a request using the CreatePresignedNotebookInstanceUrlRequest method.
 //    req := client.CreatePresignedNotebookInstanceUrlRequest(params)
@@ -568,6 +640,81 @@ func (c *SageMaker) CreateTrainingJobRequest(input *CreateTrainingJobInput) Crea
 	return CreateTrainingJobRequest{Request: req, Input: input, Copy: c.CreateTrainingJobRequest}
 }
 
+const opCreateTransformJob = "CreateTransformJob"
+
+// CreateTransformJobRequest is a API request type for the CreateTransformJob API operation.
+type CreateTransformJobRequest struct {
+	*aws.Request
+	Input *CreateTransformJobInput
+	Copy  func(*CreateTransformJobInput) CreateTransformJobRequest
+}
+
+// Send marshals and sends the CreateTransformJob API request.
+func (r CreateTransformJobRequest) Send() (*CreateTransformJobOutput, error) {
+	err := r.Request.Send()
+	if err != nil {
+		return nil, err
+	}
+
+	return r.Request.Data.(*CreateTransformJobOutput), nil
+}
+
+// CreateTransformJobRequest returns a request value for making API operation for
+// Amazon SageMaker Service.
+//
+// Starts a transform job. A transform job uses a trained model to get inferences
+// on a dataset and saves these results to an Amazon S3 location that you specify.
+//
+// To perform batch transformations, you create a transform job and use the
+// data that you have readily available.
+//
+// In the request body, you provide the following:
+//
+//    * TransformJobName - Identifies the transform job. The name must be unique
+//    within an AWS Region in an AWS account.
+//
+//    * ModelName - Identifies the model to use. ModelName must be the name
+//    of an existing Amazon SageMaker model in the same AWS Region and AWS account.
+//    For information on creating a model, see CreateModel.
+//
+//    * TransformInput - Describes the dataset to be transformed and the Amazon
+//    S3 location where it is stored.
+//
+//    * TransformOutput - Identifies the Amazon S3 location where you want Amazon
+//    SageMaker to save the results from the transform job.
+//
+//    * TransformResources - Identifies the ML compute instances for the transform
+//    job.
+//
+// For more information about how batch transformation works Amazon SageMaker,
+// see How It Works (http://docs.aws.amazon.com/sagemaker/latest/dg/batch-transform.html).
+//
+//    // Example sending a request using the CreateTransformJobRequest method.
+//    req := client.CreateTransformJobRequest(params)
+//    resp, err := req.Send()
+//    if err == nil {
+//        fmt.Println(resp)
+//    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateTransformJob
+func (c *SageMaker) CreateTransformJobRequest(input *CreateTransformJobInput) CreateTransformJobRequest {
+	op := &aws.Operation{
+		Name:       opCreateTransformJob,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &CreateTransformJobInput{}
+	}
+
+	output := &CreateTransformJobOutput{}
+	req := c.newRequest(op, input, output)
+	output.responseMetadata = aws.Response{Request: req}
+
+	return CreateTransformJobRequest{Request: req, Input: input, Copy: c.CreateTransformJobRequest}
+}
+
 const opDeleteEndpoint = "DeleteEndpoint"
 
 // DeleteEndpointRequest is a API request type for the DeleteEndpoint API operation.
@@ -592,6 +739,10 @@ func (r DeleteEndpointRequest) Send() (*DeleteEndpointOutput, error) {
 //
 // Deletes an endpoint. Amazon SageMaker frees up all of the resources that
 // were deployed when the endpoint was created.
+//
+// Amazon SageMaker retires any custom KMS key grants associated with the endpoint,
+// meaning you don't need to use the RevokeGrant (http://docs.aws.amazon.com/kms/latest/APIReference/API_RevokeGrant.html)
+// API call.
 //
 //    // Example sending a request using the DeleteEndpointRequest method.
 //    req := client.DeleteEndpointRequest(params)
@@ -643,7 +794,7 @@ func (r DeleteEndpointConfigRequest) Send() (*DeleteEndpointConfigOutput, error)
 // DeleteEndpointConfigRequest returns a request value for making API operation for
 // Amazon SageMaker Service.
 //
-// Deletes an endpoint configuration. The DeleteEndpoingConfig API deletes only
+// Deletes an endpoint configuration. The DeleteEndpointConfig API deletes only
 // the specified configuration. It does not delete endpoints created using the
 // configuration.
 //
@@ -992,6 +1143,56 @@ func (c *SageMaker) DescribeEndpointConfigRequest(input *DescribeEndpointConfigI
 	return DescribeEndpointConfigRequest{Request: req, Input: input, Copy: c.DescribeEndpointConfigRequest}
 }
 
+const opDescribeHyperParameterTuningJob = "DescribeHyperParameterTuningJob"
+
+// DescribeHyperParameterTuningJobRequest is a API request type for the DescribeHyperParameterTuningJob API operation.
+type DescribeHyperParameterTuningJobRequest struct {
+	*aws.Request
+	Input *DescribeHyperParameterTuningJobInput
+	Copy  func(*DescribeHyperParameterTuningJobInput) DescribeHyperParameterTuningJobRequest
+}
+
+// Send marshals and sends the DescribeHyperParameterTuningJob API request.
+func (r DescribeHyperParameterTuningJobRequest) Send() (*DescribeHyperParameterTuningJobOutput, error) {
+	err := r.Request.Send()
+	if err != nil {
+		return nil, err
+	}
+
+	return r.Request.Data.(*DescribeHyperParameterTuningJobOutput), nil
+}
+
+// DescribeHyperParameterTuningJobRequest returns a request value for making API operation for
+// Amazon SageMaker Service.
+//
+// Gets a description of a hyperparameter tuning job.
+//
+//    // Example sending a request using the DescribeHyperParameterTuningJobRequest method.
+//    req := client.DescribeHyperParameterTuningJobRequest(params)
+//    resp, err := req.Send()
+//    if err == nil {
+//        fmt.Println(resp)
+//    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeHyperParameterTuningJob
+func (c *SageMaker) DescribeHyperParameterTuningJobRequest(input *DescribeHyperParameterTuningJobInput) DescribeHyperParameterTuningJobRequest {
+	op := &aws.Operation{
+		Name:       opDescribeHyperParameterTuningJob,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &DescribeHyperParameterTuningJobInput{}
+	}
+
+	output := &DescribeHyperParameterTuningJobOutput{}
+	req := c.newRequest(op, input, output)
+	output.responseMetadata = aws.Response{Request: req}
+
+	return DescribeHyperParameterTuningJobRequest{Request: req, Input: input, Copy: c.DescribeHyperParameterTuningJobRequest}
+}
+
 const opDescribeModel = "DescribeModel"
 
 // DescribeModelRequest is a API request type for the DescribeModel API operation.
@@ -1192,6 +1393,56 @@ func (c *SageMaker) DescribeTrainingJobRequest(input *DescribeTrainingJobInput) 
 	output.responseMetadata = aws.Response{Request: req}
 
 	return DescribeTrainingJobRequest{Request: req, Input: input, Copy: c.DescribeTrainingJobRequest}
+}
+
+const opDescribeTransformJob = "DescribeTransformJob"
+
+// DescribeTransformJobRequest is a API request type for the DescribeTransformJob API operation.
+type DescribeTransformJobRequest struct {
+	*aws.Request
+	Input *DescribeTransformJobInput
+	Copy  func(*DescribeTransformJobInput) DescribeTransformJobRequest
+}
+
+// Send marshals and sends the DescribeTransformJob API request.
+func (r DescribeTransformJobRequest) Send() (*DescribeTransformJobOutput, error) {
+	err := r.Request.Send()
+	if err != nil {
+		return nil, err
+	}
+
+	return r.Request.Data.(*DescribeTransformJobOutput), nil
+}
+
+// DescribeTransformJobRequest returns a request value for making API operation for
+// Amazon SageMaker Service.
+//
+// Returns information about a transform job.
+//
+//    // Example sending a request using the DescribeTransformJobRequest method.
+//    req := client.DescribeTransformJobRequest(params)
+//    resp, err := req.Send()
+//    if err == nil {
+//        fmt.Println(resp)
+//    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeTransformJob
+func (c *SageMaker) DescribeTransformJobRequest(input *DescribeTransformJobInput) DescribeTransformJobRequest {
+	op := &aws.Operation{
+		Name:       opDescribeTransformJob,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &DescribeTransformJobInput{}
+	}
+
+	output := &DescribeTransformJobOutput{}
+	req := c.newRequest(op, input, output)
+	output.responseMetadata = aws.Response{Request: req}
+
+	return DescribeTransformJobRequest{Request: req, Input: input, Copy: c.DescribeTransformJobRequest}
 }
 
 const opListEndpointConfigs = "ListEndpointConfigs"
@@ -1398,6 +1649,109 @@ func (p *ListEndpointsPager) CurrentPage() *ListEndpointsOutput {
 	return p.Pager.CurrentPage().(*ListEndpointsOutput)
 }
 
+const opListHyperParameterTuningJobs = "ListHyperParameterTuningJobs"
+
+// ListHyperParameterTuningJobsRequest is a API request type for the ListHyperParameterTuningJobs API operation.
+type ListHyperParameterTuningJobsRequest struct {
+	*aws.Request
+	Input *ListHyperParameterTuningJobsInput
+	Copy  func(*ListHyperParameterTuningJobsInput) ListHyperParameterTuningJobsRequest
+}
+
+// Send marshals and sends the ListHyperParameterTuningJobs API request.
+func (r ListHyperParameterTuningJobsRequest) Send() (*ListHyperParameterTuningJobsOutput, error) {
+	err := r.Request.Send()
+	if err != nil {
+		return nil, err
+	}
+
+	return r.Request.Data.(*ListHyperParameterTuningJobsOutput), nil
+}
+
+// ListHyperParameterTuningJobsRequest returns a request value for making API operation for
+// Amazon SageMaker Service.
+//
+// Gets a list of HyperParameterTuningJobSummary objects that describe the hyperparameter
+// tuning jobs launched in your account.
+//
+//    // Example sending a request using the ListHyperParameterTuningJobsRequest method.
+//    req := client.ListHyperParameterTuningJobsRequest(params)
+//    resp, err := req.Send()
+//    if err == nil {
+//        fmt.Println(resp)
+//    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListHyperParameterTuningJobs
+func (c *SageMaker) ListHyperParameterTuningJobsRequest(input *ListHyperParameterTuningJobsInput) ListHyperParameterTuningJobsRequest {
+	op := &aws.Operation{
+		Name:       opListHyperParameterTuningJobs,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+		Paginator: &aws.Paginator{
+			InputTokens:     []string{"NextToken"},
+			OutputTokens:    []string{"NextToken"},
+			LimitToken:      "MaxResults",
+			TruncationToken: "",
+		},
+	}
+
+	if input == nil {
+		input = &ListHyperParameterTuningJobsInput{}
+	}
+
+	output := &ListHyperParameterTuningJobsOutput{}
+	req := c.newRequest(op, input, output)
+	output.responseMetadata = aws.Response{Request: req}
+
+	return ListHyperParameterTuningJobsRequest{Request: req, Input: input, Copy: c.ListHyperParameterTuningJobsRequest}
+}
+
+// Paginate pages iterates over the pages of a ListHyperParameterTuningJobsRequest operation,
+// calling the Next method for each page. Using the paginators Next
+// method will depict whether or not there are more pages.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a ListHyperParameterTuningJobs operation.
+//		req := client.ListHyperParameterTuningJobsRequest(input)
+//		p := req.Paginate()
+//		for p.Next() {
+//			page := p.CurrentPage()
+//		}
+//
+//		if err := p.Err(); err != nil {
+//			return err
+//		}
+//
+func (p *ListHyperParameterTuningJobsRequest) Paginate(opts ...aws.Option) ListHyperParameterTuningJobsPager {
+	return ListHyperParameterTuningJobsPager{
+		Pager: aws.Pager{
+			NewRequest: func() (*aws.Request, error) {
+				var inCpy *ListHyperParameterTuningJobsInput
+				if p.Input != nil {
+					tmp := *p.Input
+					inCpy = &tmp
+				}
+
+				req := p.Copy(inCpy)
+				req.ApplyOptions(opts...)
+
+				return req.Request, nil
+			},
+		},
+	}
+}
+
+// ListHyperParameterTuningJobsPager is used to paginate the request. This can be done by
+// calling Next and CurrentPage.
+type ListHyperParameterTuningJobsPager struct {
+	aws.Pager
+}
+
+func (p *ListHyperParameterTuningJobsPager) CurrentPage() *ListHyperParameterTuningJobsOutput {
+	return p.Pager.CurrentPage().(*ListHyperParameterTuningJobsOutput)
+}
+
 const opListModels = "ListModels"
 
 // ListModelsRequest is a API request type for the ListModels API operation.
@@ -1523,7 +1877,8 @@ func (r ListNotebookInstanceLifecycleConfigsRequest) Send() (*ListNotebookInstan
 // ListNotebookInstanceLifecycleConfigsRequest returns a request value for making API operation for
 // Amazon SageMaker Service.
 //
-// Lists notebook instance lifestyle configurations created with the API.
+// Lists notebook instance lifestyle configurations created with the CreateNotebookInstanceLifecycleConfig
+// API.
 //
 //    // Example sending a request using the ListNotebookInstanceLifecycleConfigsRequest method.
 //    req := client.ListNotebookInstanceLifecycleConfigsRequest(params)
@@ -1910,6 +2265,211 @@ func (p *ListTrainingJobsPager) CurrentPage() *ListTrainingJobsOutput {
 	return p.Pager.CurrentPage().(*ListTrainingJobsOutput)
 }
 
+const opListTrainingJobsForHyperParameterTuningJob = "ListTrainingJobsForHyperParameterTuningJob"
+
+// ListTrainingJobsForHyperParameterTuningJobRequest is a API request type for the ListTrainingJobsForHyperParameterTuningJob API operation.
+type ListTrainingJobsForHyperParameterTuningJobRequest struct {
+	*aws.Request
+	Input *ListTrainingJobsForHyperParameterTuningJobInput
+	Copy  func(*ListTrainingJobsForHyperParameterTuningJobInput) ListTrainingJobsForHyperParameterTuningJobRequest
+}
+
+// Send marshals and sends the ListTrainingJobsForHyperParameterTuningJob API request.
+func (r ListTrainingJobsForHyperParameterTuningJobRequest) Send() (*ListTrainingJobsForHyperParameterTuningJobOutput, error) {
+	err := r.Request.Send()
+	if err != nil {
+		return nil, err
+	}
+
+	return r.Request.Data.(*ListTrainingJobsForHyperParameterTuningJobOutput), nil
+}
+
+// ListTrainingJobsForHyperParameterTuningJobRequest returns a request value for making API operation for
+// Amazon SageMaker Service.
+//
+// Gets a list of TrainingJobSummary objects that describe the training jobs
+// that a hyperparameter tuning job launched.
+//
+//    // Example sending a request using the ListTrainingJobsForHyperParameterTuningJobRequest method.
+//    req := client.ListTrainingJobsForHyperParameterTuningJobRequest(params)
+//    resp, err := req.Send()
+//    if err == nil {
+//        fmt.Println(resp)
+//    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListTrainingJobsForHyperParameterTuningJob
+func (c *SageMaker) ListTrainingJobsForHyperParameterTuningJobRequest(input *ListTrainingJobsForHyperParameterTuningJobInput) ListTrainingJobsForHyperParameterTuningJobRequest {
+	op := &aws.Operation{
+		Name:       opListTrainingJobsForHyperParameterTuningJob,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+		Paginator: &aws.Paginator{
+			InputTokens:     []string{"NextToken"},
+			OutputTokens:    []string{"NextToken"},
+			LimitToken:      "MaxResults",
+			TruncationToken: "",
+		},
+	}
+
+	if input == nil {
+		input = &ListTrainingJobsForHyperParameterTuningJobInput{}
+	}
+
+	output := &ListTrainingJobsForHyperParameterTuningJobOutput{}
+	req := c.newRequest(op, input, output)
+	output.responseMetadata = aws.Response{Request: req}
+
+	return ListTrainingJobsForHyperParameterTuningJobRequest{Request: req, Input: input, Copy: c.ListTrainingJobsForHyperParameterTuningJobRequest}
+}
+
+// Paginate pages iterates over the pages of a ListTrainingJobsForHyperParameterTuningJobRequest operation,
+// calling the Next method for each page. Using the paginators Next
+// method will depict whether or not there are more pages.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a ListTrainingJobsForHyperParameterTuningJob operation.
+//		req := client.ListTrainingJobsForHyperParameterTuningJobRequest(input)
+//		p := req.Paginate()
+//		for p.Next() {
+//			page := p.CurrentPage()
+//		}
+//
+//		if err := p.Err(); err != nil {
+//			return err
+//		}
+//
+func (p *ListTrainingJobsForHyperParameterTuningJobRequest) Paginate(opts ...aws.Option) ListTrainingJobsForHyperParameterTuningJobPager {
+	return ListTrainingJobsForHyperParameterTuningJobPager{
+		Pager: aws.Pager{
+			NewRequest: func() (*aws.Request, error) {
+				var inCpy *ListTrainingJobsForHyperParameterTuningJobInput
+				if p.Input != nil {
+					tmp := *p.Input
+					inCpy = &tmp
+				}
+
+				req := p.Copy(inCpy)
+				req.ApplyOptions(opts...)
+
+				return req.Request, nil
+			},
+		},
+	}
+}
+
+// ListTrainingJobsForHyperParameterTuningJobPager is used to paginate the request. This can be done by
+// calling Next and CurrentPage.
+type ListTrainingJobsForHyperParameterTuningJobPager struct {
+	aws.Pager
+}
+
+func (p *ListTrainingJobsForHyperParameterTuningJobPager) CurrentPage() *ListTrainingJobsForHyperParameterTuningJobOutput {
+	return p.Pager.CurrentPage().(*ListTrainingJobsForHyperParameterTuningJobOutput)
+}
+
+const opListTransformJobs = "ListTransformJobs"
+
+// ListTransformJobsRequest is a API request type for the ListTransformJobs API operation.
+type ListTransformJobsRequest struct {
+	*aws.Request
+	Input *ListTransformJobsInput
+	Copy  func(*ListTransformJobsInput) ListTransformJobsRequest
+}
+
+// Send marshals and sends the ListTransformJobs API request.
+func (r ListTransformJobsRequest) Send() (*ListTransformJobsOutput, error) {
+	err := r.Request.Send()
+	if err != nil {
+		return nil, err
+	}
+
+	return r.Request.Data.(*ListTransformJobsOutput), nil
+}
+
+// ListTransformJobsRequest returns a request value for making API operation for
+// Amazon SageMaker Service.
+//
+// Lists transform jobs.
+//
+//    // Example sending a request using the ListTransformJobsRequest method.
+//    req := client.ListTransformJobsRequest(params)
+//    resp, err := req.Send()
+//    if err == nil {
+//        fmt.Println(resp)
+//    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListTransformJobs
+func (c *SageMaker) ListTransformJobsRequest(input *ListTransformJobsInput) ListTransformJobsRequest {
+	op := &aws.Operation{
+		Name:       opListTransformJobs,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+		Paginator: &aws.Paginator{
+			InputTokens:     []string{"NextToken"},
+			OutputTokens:    []string{"NextToken"},
+			LimitToken:      "MaxResults",
+			TruncationToken: "",
+		},
+	}
+
+	if input == nil {
+		input = &ListTransformJobsInput{}
+	}
+
+	output := &ListTransformJobsOutput{}
+	req := c.newRequest(op, input, output)
+	output.responseMetadata = aws.Response{Request: req}
+
+	return ListTransformJobsRequest{Request: req, Input: input, Copy: c.ListTransformJobsRequest}
+}
+
+// Paginate pages iterates over the pages of a ListTransformJobsRequest operation,
+// calling the Next method for each page. Using the paginators Next
+// method will depict whether or not there are more pages.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a ListTransformJobs operation.
+//		req := client.ListTransformJobsRequest(input)
+//		p := req.Paginate()
+//		for p.Next() {
+//			page := p.CurrentPage()
+//		}
+//
+//		if err := p.Err(); err != nil {
+//			return err
+//		}
+//
+func (p *ListTransformJobsRequest) Paginate(opts ...aws.Option) ListTransformJobsPager {
+	return ListTransformJobsPager{
+		Pager: aws.Pager{
+			NewRequest: func() (*aws.Request, error) {
+				var inCpy *ListTransformJobsInput
+				if p.Input != nil {
+					tmp := *p.Input
+					inCpy = &tmp
+				}
+
+				req := p.Copy(inCpy)
+				req.ApplyOptions(opts...)
+
+				return req.Request, nil
+			},
+		},
+	}
+}
+
+// ListTransformJobsPager is used to paginate the request. This can be done by
+// calling Next and CurrentPage.
+type ListTransformJobsPager struct {
+	aws.Pager
+}
+
+func (p *ListTransformJobsPager) CurrentPage() *ListTransformJobsOutput {
+	return p.Pager.CurrentPage().(*ListTransformJobsOutput)
+}
+
 const opStartNotebookInstance = "StartNotebookInstance"
 
 // StartNotebookInstanceRequest is a API request type for the StartNotebookInstance API operation.
@@ -1964,6 +2524,64 @@ func (c *SageMaker) StartNotebookInstanceRequest(input *StartNotebookInstanceInp
 	output.responseMetadata = aws.Response{Request: req}
 
 	return StartNotebookInstanceRequest{Request: req, Input: input, Copy: c.StartNotebookInstanceRequest}
+}
+
+const opStopHyperParameterTuningJob = "StopHyperParameterTuningJob"
+
+// StopHyperParameterTuningJobRequest is a API request type for the StopHyperParameterTuningJob API operation.
+type StopHyperParameterTuningJobRequest struct {
+	*aws.Request
+	Input *StopHyperParameterTuningJobInput
+	Copy  func(*StopHyperParameterTuningJobInput) StopHyperParameterTuningJobRequest
+}
+
+// Send marshals and sends the StopHyperParameterTuningJob API request.
+func (r StopHyperParameterTuningJobRequest) Send() (*StopHyperParameterTuningJobOutput, error) {
+	err := r.Request.Send()
+	if err != nil {
+		return nil, err
+	}
+
+	return r.Request.Data.(*StopHyperParameterTuningJobOutput), nil
+}
+
+// StopHyperParameterTuningJobRequest returns a request value for making API operation for
+// Amazon SageMaker Service.
+//
+// Stops a running hyperparameter tuning job and all running training jobs that
+// the tuning job launched.
+//
+// All model artifacts output from the training jobs are stored in Amazon Simple
+// Storage Service (Amazon S3). All data that the training jobs write to Amazon
+// CloudWatch Logs are still available in CloudWatch. After the tuning job moves
+// to the Stopped state, it releases all reserved resources for the tuning job.
+//
+//    // Example sending a request using the StopHyperParameterTuningJobRequest method.
+//    req := client.StopHyperParameterTuningJobRequest(params)
+//    resp, err := req.Send()
+//    if err == nil {
+//        fmt.Println(resp)
+//    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/StopHyperParameterTuningJob
+func (c *SageMaker) StopHyperParameterTuningJobRequest(input *StopHyperParameterTuningJobInput) StopHyperParameterTuningJobRequest {
+	op := &aws.Operation{
+		Name:       opStopHyperParameterTuningJob,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &StopHyperParameterTuningJobInput{}
+	}
+
+	output := &StopHyperParameterTuningJobOutput{}
+	req := c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Remove(jsonrpc.UnmarshalHandler)
+	req.Handlers.Unmarshal.PushBackNamed(protocol.UnmarshalDiscardBodyHandler)
+	output.responseMetadata = aws.Response{Request: req}
+
+	return StopHyperParameterTuningJobRequest{Request: req, Input: input, Copy: c.StopHyperParameterTuningJobRequest}
 }
 
 const opStopNotebookInstance = "StopNotebookInstance"
@@ -2089,6 +2707,63 @@ func (c *SageMaker) StopTrainingJobRequest(input *StopTrainingJobInput) StopTrai
 	return StopTrainingJobRequest{Request: req, Input: input, Copy: c.StopTrainingJobRequest}
 }
 
+const opStopTransformJob = "StopTransformJob"
+
+// StopTransformJobRequest is a API request type for the StopTransformJob API operation.
+type StopTransformJobRequest struct {
+	*aws.Request
+	Input *StopTransformJobInput
+	Copy  func(*StopTransformJobInput) StopTransformJobRequest
+}
+
+// Send marshals and sends the StopTransformJob API request.
+func (r StopTransformJobRequest) Send() (*StopTransformJobOutput, error) {
+	err := r.Request.Send()
+	if err != nil {
+		return nil, err
+	}
+
+	return r.Request.Data.(*StopTransformJobOutput), nil
+}
+
+// StopTransformJobRequest returns a request value for making API operation for
+// Amazon SageMaker Service.
+//
+// Stops a transform job.
+//
+// When Amazon SageMaker receives a StopTransformJob request, the status of
+// the job changes to Stopping. After Amazon SageMaker stops the job, the status
+// is set to Stopped. When you stop a transform job before it is completed,
+// Amazon SageMaker doesn't store the job's output in Amazon S3.
+//
+//    // Example sending a request using the StopTransformJobRequest method.
+//    req := client.StopTransformJobRequest(params)
+//    resp, err := req.Send()
+//    if err == nil {
+//        fmt.Println(resp)
+//    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/StopTransformJob
+func (c *SageMaker) StopTransformJobRequest(input *StopTransformJobInput) StopTransformJobRequest {
+	op := &aws.Operation{
+		Name:       opStopTransformJob,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &StopTransformJobInput{}
+	}
+
+	output := &StopTransformJobOutput{}
+	req := c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Remove(jsonrpc.UnmarshalHandler)
+	req.Handlers.Unmarshal.PushBackNamed(protocol.UnmarshalDiscardBodyHandler)
+	output.responseMetadata = aws.Response{Request: req}
+
+	return StopTransformJobRequest{Request: req, Input: input, Copy: c.StopTransformJobRequest}
+}
+
 const opUpdateEndpoint = "UpdateEndpoint"
 
 // UpdateEndpointRequest is a API request type for the UpdateEndpoint API operation.
@@ -2119,6 +2794,9 @@ func (r UpdateEndpointRequest) Send() (*UpdateEndpointOutput, error) {
 // Updating. After updating the endpoint, it sets the status to InService. To
 // check the status of an endpoint, use the DescribeEndpoint (http://docs.aws.amazon.com/sagemaker/latest/dg/API_DescribeEndpoint.html)
 // API.
+//
+// You cannot update an endpoint with the current EndpointConfig. To update
+// an endpoint, you must create a new EndpointConfig.
 //
 //    // Example sending a request using the UpdateEndpointRequest method.
 //    req := client.UpdateEndpointRequest(params)
@@ -2276,7 +2954,8 @@ func (r UpdateNotebookInstanceLifecycleConfigRequest) Send() (*UpdateNotebookIns
 // UpdateNotebookInstanceLifecycleConfigRequest returns a request value for making API operation for
 // Amazon SageMaker Service.
 //
-// Updates a notebook instance lifecycle configuration created with the API.
+// Updates a notebook instance lifecycle configuration created with the CreateNotebookInstanceLifecycleConfig
+// API.
 //
 //    // Example sending a request using the UpdateNotebookInstanceLifecycleConfigRequest method.
 //    req := client.UpdateNotebookInstanceLifecycleConfigRequest(params)
@@ -2449,6 +3128,53 @@ func (s *AlgorithmSpecification) Validate() error {
 	return nil
 }
 
+// A list of categorical hyperparameters to tune.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CategoricalParameterRange
+type CategoricalParameterRange struct {
+	_ struct{} `type:"structure"`
+
+	// The name of the categorical hyperparameter to tune.
+	//
+	// Name is a required field
+	Name *string `type:"string" required:"true"`
+
+	// A list of the categories for the hyperparameter.
+	//
+	// Values is a required field
+	Values []string `min:"1" type:"list" required:"true"`
+}
+
+// String returns the string representation
+func (s CategoricalParameterRange) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CategoricalParameterRange) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *CategoricalParameterRange) Validate() error {
+	invalidParams := aws.ErrInvalidParams{Context: "CategoricalParameterRange"}
+
+	if s.Name == nil {
+		invalidParams.Add(aws.NewErrParamRequired("Name"))
+	}
+
+	if s.Values == nil {
+		invalidParams.Add(aws.NewErrParamRequired("Values"))
+	}
+	if s.Values != nil && len(s.Values) < 1 {
+		invalidParams.Add(aws.NewErrParamMinLen("Values", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
 // A channel is a named input source that training algorithms can consume.
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/Channel
 type Channel struct {
@@ -2460,7 +3186,7 @@ type Channel struct {
 	ChannelName *string `min:"1" type:"string" required:"true"`
 
 	// If training data is compressed, the compression type. The default value is
-	// None. CompressionType is used only in PIPE input mode. In FILE mode, leave
+	// None. CompressionType is used only in Pipe input mode. In File mode, leave
 	// this field unset or set it to None.
 	CompressionType CompressionType `type:"string" enum:"true"`
 
@@ -2473,10 +3199,10 @@ type Channel struct {
 	DataSource *DataSource `type:"structure" required:"true"`
 
 	// Specify RecordIO as the value when input data is in raw format but the training
-	// algorithm requires the RecordIO format, in which caseAmazon SageMaker wraps
+	// algorithm requires the RecordIO format, in which case, Amazon SageMaker wraps
 	// each individual S3 object in a RecordIO record. If the input data is already
 	// in RecordIO format, you don't need to set this attribute. For more information,
-	// see Create a Dataset Using RecordIO (https://mxnet.incubator.apache.org/how_to/recordio.html?highlight=im2rec)
+	// see Create a Dataset Using RecordIO (https://mxnet.incubator.apache.org/architecture/note_data_loading.html#data-format)
 	RecordWrapperType RecordWrapper `type:"string" enum:"true"`
 }
 
@@ -2532,8 +3258,9 @@ type ContainerDefinition struct {
 	// The Amazon EC2 Container Registry (Amazon ECR) path where inference code
 	// is stored. If you are using your own custom algorithm instead of an algorithm
 	// provided by Amazon SageMaker, the inference code must meet Amazon SageMaker
-	// requirements. For more information, see Using Your Own Algorithms with Amazon
-	// SageMaker (http://docs.aws.amazon.com/sagemaker/latest/dg/your-algorithms.html)
+	// requirements. Amazon SageMaker supports both registry/repository[:tag] and
+	// registry/repository[@digest] image path formats. For more information, see
+	// Using Your Own Algorithms with Amazon SageMaker (http://docs.aws.amazon.com/sagemaker/latest/dg/your-algorithms.html)
 	//
 	// Image is a required field
 	Image *string `type:"string" required:"true"`
@@ -2541,6 +3268,14 @@ type ContainerDefinition struct {
 	// The S3 path where the model artifacts, which result from model training,
 	// are stored. This path must point to a single gzip compressed tar archive
 	// (.tar.gz suffix).
+	//
+	// If you provide a value for this parameter, Amazon SageMaker uses AWS Security
+	// Token Service to download model artifacts from the S3 path you provide. AWS
+	// STS is activated in your IAM user account by default. If you previously deactivated
+	// AWS STS for a region, you need to reactivate AWS STS for that region. For
+	// more information, see Activating and Deactivating AWS STS i an AWS Region
+	// (http://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_temp_enable-regions.html)
+	// in the AWS Identity and Access Management User Guide.
 	ModelDataUrl *string `type:"string"`
 }
 
@@ -2560,6 +3295,61 @@ func (s *ContainerDefinition) Validate() error {
 
 	if s.Image == nil {
 		invalidParams.Add(aws.NewErrParamRequired("Image"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// A list of continuous hyperparameters to tune.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ContinuousParameterRange
+type ContinuousParameterRange struct {
+	_ struct{} `type:"structure"`
+
+	// The maximum value for the hyperparameter. The tuning job uses floating-point
+	// values between MinValue value and this value for tuning.
+	//
+	// MaxValue is a required field
+	MaxValue *string `type:"string" required:"true"`
+
+	// The minimum value for the hyperparameter. The tuning job uses floating-point
+	// values between this value and MaxValuefor tuning.
+	//
+	// MinValue is a required field
+	MinValue *string `type:"string" required:"true"`
+
+	// The name of the continuous hyperparameter to tune.
+	//
+	// Name is a required field
+	Name *string `type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s ContinuousParameterRange) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ContinuousParameterRange) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ContinuousParameterRange) Validate() error {
+	invalidParams := aws.ErrInvalidParams{Context: "ContinuousParameterRange"}
+
+	if s.MaxValue == nil {
+		invalidParams.Add(aws.NewErrParamRequired("MaxValue"))
+	}
+
+	if s.MinValue == nil {
+		invalidParams.Add(aws.NewErrParamRequired("MinValue"))
+	}
+
+	if s.Name == nil {
+		invalidParams.Add(aws.NewErrParamRequired("Name"))
 	}
 
 	if invalidParams.Len() > 0 {
@@ -2752,14 +3542,131 @@ func (s CreateEndpointOutput) SDKResponseMetadata() aws.Response {
 	return s.responseMetadata
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateHyperParameterTuningJobRequest
+type CreateHyperParameterTuningJobInput struct {
+	_ struct{} `type:"structure"`
+
+	// The HyperParameterTuningJobConfig object that describes the tuning job, including
+	// the search strategy, metric used to evaluate training jobs, ranges of parameters
+	// to search, and resource limits for the tuning job.
+	//
+	// HyperParameterTuningJobConfig is a required field
+	HyperParameterTuningJobConfig *HyperParameterTuningJobConfig `type:"structure" required:"true"`
+
+	// The name of the tuning job. This name is the prefix for the names of all
+	// training jobs that this tuning job launches. The name must be unique within
+	// the same AWS account and AWS Region. Names are not case sensitive, and must
+	// be between 1-32 characters.
+	//
+	// HyperParameterTuningJobName is a required field
+	HyperParameterTuningJobName *string `min:"1" type:"string" required:"true"`
+
+	// An array of key-value pairs. You can use tags to categorize your AWS resources
+	// in different ways, for example, by purpose, owner, or environment. For more
+	// information, see Using Cost Allocation Tags (http://docs.aws.amazon.com//awsaccountbilling/latest/aboutv2/cost-alloc-tags.html#allocation-what)
+	// in the AWS Billing and Cost Management User Guide.
+	Tags []Tag `type:"list"`
+
+	// The HyperParameterTrainingJobDefinition object that describes the training
+	// jobs that this tuning job launches, including static hyperparameters, input
+	// data configuration, output data configuration, resource configuration, and
+	// stopping condition.
+	//
+	// TrainingJobDefinition is a required field
+	TrainingJobDefinition *HyperParameterTrainingJobDefinition `type:"structure" required:"true"`
+}
+
+// String returns the string representation
+func (s CreateHyperParameterTuningJobInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CreateHyperParameterTuningJobInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *CreateHyperParameterTuningJobInput) Validate() error {
+	invalidParams := aws.ErrInvalidParams{Context: "CreateHyperParameterTuningJobInput"}
+
+	if s.HyperParameterTuningJobConfig == nil {
+		invalidParams.Add(aws.NewErrParamRequired("HyperParameterTuningJobConfig"))
+	}
+
+	if s.HyperParameterTuningJobName == nil {
+		invalidParams.Add(aws.NewErrParamRequired("HyperParameterTuningJobName"))
+	}
+	if s.HyperParameterTuningJobName != nil && len(*s.HyperParameterTuningJobName) < 1 {
+		invalidParams.Add(aws.NewErrParamMinLen("HyperParameterTuningJobName", 1))
+	}
+
+	if s.TrainingJobDefinition == nil {
+		invalidParams.Add(aws.NewErrParamRequired("TrainingJobDefinition"))
+	}
+	if s.HyperParameterTuningJobConfig != nil {
+		if err := s.HyperParameterTuningJobConfig.Validate(); err != nil {
+			invalidParams.AddNested("HyperParameterTuningJobConfig", err.(aws.ErrInvalidParams))
+		}
+	}
+	if s.Tags != nil {
+		for i, v := range s.Tags {
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "Tags", i), err.(aws.ErrInvalidParams))
+			}
+		}
+	}
+	if s.TrainingJobDefinition != nil {
+		if err := s.TrainingJobDefinition.Validate(); err != nil {
+			invalidParams.AddNested("TrainingJobDefinition", err.(aws.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateHyperParameterTuningJobResponse
+type CreateHyperParameterTuningJobOutput struct {
+	_ struct{} `type:"structure"`
+
+	responseMetadata aws.Response
+
+	// The Amazon Resource Name (ARN) of the tuning job.
+	//
+	// HyperParameterTuningJobArn is a required field
+	HyperParameterTuningJobArn *string `type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s CreateHyperParameterTuningJobOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CreateHyperParameterTuningJobOutput) GoString() string {
+	return s.String()
+}
+
+// SDKResponseMetdata return sthe response metadata for the API.
+func (s CreateHyperParameterTuningJobOutput) SDKResponseMetadata() aws.Response {
+	return s.responseMetadata
+}
+
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateModelInput
 type CreateModelInput struct {
 	_ struct{} `type:"structure"`
 
 	// The Amazon Resource Name (ARN) of the IAM role that Amazon SageMaker can
 	// assume to access model artifacts and docker image for deployment on ML compute
-	// instances. Deploying on ML compute instances is part of model hosting. For
-	// more information, see Amazon SageMaker Roles (http://docs.aws.amazon.com/sagemaker/latest/dg/sagemaker-roles.html).
+	// instances or for batch transform jobs. Deploying on ML compute instances
+	// is part of model hosting. For more information, see Amazon SageMaker Roles
+	// (http://docs.aws.amazon.com/sagemaker/latest/dg/sagemaker-roles.html).
+	//
+	// To be able to pass this role to Amazon SageMaker, the caller of this API
+	// must have the iam:PassRole permission.
 	//
 	// ExecutionRoleArn is a required field
 	ExecutionRoleArn *string `min:"20" type:"string" required:"true"`
@@ -2771,7 +3678,7 @@ type CreateModelInput struct {
 
 	// The location of the primary docker image containing inference code, associated
 	// artifacts, and custom environment map that the inference code uses when the
-	// model is deployed into production.
+	// model is deployed for predictions.
 	//
 	// PrimaryContainer is a required field
 	PrimaryContainer *ContainerDefinition `type:"structure" required:"true"`
@@ -2781,9 +3688,10 @@ type CreateModelInput struct {
 	// in the AWS Billing and Cost Management User Guide.
 	Tags []Tag `type:"list"`
 
-	// A object that specifies the VPC that you want your model to connect to. Control
-	// access to and from your training container by configuring the VPC. For more
-	// information, see host-vpc.
+	// A VpcConfig object that specifies the VPC that you want your model to connect
+	// to. Control access to and from your model container by configuring the VPC.
+	// VpcConfig is currently used in hosting services but not in batch transform.
+	// For more information, see host-vpc.
 	VpcConfig *VpcConfig `type:"structure"`
 }
 
@@ -2905,6 +3813,9 @@ type CreateNotebookInstanceInput struct {
 	// The policy must allow the Amazon SageMaker service principal (sagemaker.amazonaws.com)
 	// permissions to assume this role. For more information, see Amazon SageMaker
 	// Roles (http://docs.aws.amazon.com/sagemaker/latest/dg/sagemaker-roles.html).
+	//
+	// To be able to pass this role to Amazon SageMaker, the caller of this API
+	// must have the iam:PassRole permission.
 	//
 	// RoleArn is a required field
 	RoleArn *string `min:"20" type:"string" required:"true"`
@@ -3145,10 +4056,10 @@ type CreateTrainingJobInput struct {
 	// AlgorithmSpecification is a required field
 	AlgorithmSpecification *AlgorithmSpecification `type:"structure" required:"true"`
 
-	// Algorithm-specific parameters. You set hyperparameters before you start the
-	// learning process. Hyperparameters influence the quality of the model. For
-	// a list of hyperparameters for each training algorithm provided by Amazon
-	// SageMaker, see Algorithms (http://docs.aws.amazon.com/sagemaker/latest/dg/algos.html).
+	// Algorithm-specific parameters that influence the quality of the model. You
+	// set hyperparameters before you start the learning process. For a list of
+	// hyperparameters for each training algorithm provided by Amazon SageMaker,
+	// see Algorithms (http://docs.aws.amazon.com/sagemaker/latest/dg/algos.html).
 	//
 	// You can specify a maximum of 100 hyperparameters. Each hyperparameter is
 	// a key-value pair. Each key and value is limited to 256 characters, as specified
@@ -3199,6 +4110,9 @@ type CreateTrainingJobInput struct {
 	// these tasks to an IAM role. For more information, see Amazon SageMaker Roles
 	// (http://docs.aws.amazon.com/sagemaker/latest/dg/sagemaker-roles.html).
 	//
+	// To be able to pass this role to Amazon SageMaker, the caller of this API
+	// must have the iam:PassRole permission.
+	//
 	// RoleArn is a required field
 	RoleArn *string `min:"20" type:"string" required:"true"`
 
@@ -3221,14 +4135,14 @@ type CreateTrainingJobInput struct {
 	Tags []Tag `type:"list"`
 
 	// The name of the training job. The name must be unique within an AWS Region
-	// in an AWS account. It appears in the Amazon SageMaker console.
+	// in an AWS account.
 	//
 	// TrainingJobName is a required field
 	TrainingJobName *string `min:"1" type:"string" required:"true"`
 
-	// A object that specifies the VPC that you want your training job to connect
-	// to. Control access to and from your training container by configuring the
-	// VPC. For more information, see train-vpc
+	// A VpcConfig object that specifies the VPC that you want your training job
+	// to connect to. Control access to and from your training container by configuring
+	// the VPC. For more information, see train-vpc
 	VpcConfig *VpcConfig `type:"structure"`
 }
 
@@ -3352,6 +4266,169 @@ func (s CreateTrainingJobOutput) GoString() string {
 
 // SDKResponseMetdata return sthe response metadata for the API.
 func (s CreateTrainingJobOutput) SDKResponseMetadata() aws.Response {
+	return s.responseMetadata
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateTransformJobRequest
+type CreateTransformJobInput struct {
+	_ struct{} `type:"structure"`
+
+	// Determines the number of records included in a single mini-batch. SingleRecord
+	// means only one record is used per mini-batch. MultiRecord means a mini-batch
+	// is set to contain as many records that can fit within the MaxPayloadInMB
+	// limit.
+	//
+	// Batch transform will automatically split your input data into whatever payload
+	// size is specified if you set SplitType to Line and BatchStrategy to MultiRecord.
+	// There's no need to split the dataset into smaller files or to use larger
+	// payload sizes unless the records in your dataset are very large.
+	BatchStrategy BatchStrategy `type:"string" enum:"true"`
+
+	// The environment variables to set in the Docker container. We support up to
+	// 16 key and values entries in the map.
+	Environment map[string]string `type:"map"`
+
+	// The maximum number of parallel requests that can be sent to each instance
+	// in a transform job. This is good for algorithms that implement multiple workers
+	// on larger instances . The default value is 1. To allow Amazon SageMaker to
+	// determine the appropriate number for MaxConcurrentTransforms, set the value
+	// to 0.
+	MaxConcurrentTransforms *int64 `type:"integer"`
+
+	// The maximum payload size allowed, in MB. A payload is the data portion of
+	// a record (without metadata). The value in MaxPayloadInMB must be greater
+	// or equal to the size of a single record. You can approximate the size of
+	// a record by dividing the size of your dataset by the number of records. Then
+	// multiply this value by the number of records you want in a mini-batch. It
+	// is recommended to enter a value slightly larger than this to ensure the records
+	// fit within the maximum payload size. The default value is 6 MB. For an unlimited
+	// payload size, set the value to 0.
+	MaxPayloadInMB *int64 `type:"integer"`
+
+	// The name of the model that you want to use for the transform job. ModelName
+	// must be the name of an existing Amazon SageMaker model within an AWS Region
+	// in an AWS account.
+	//
+	// ModelName is a required field
+	ModelName *string `type:"string" required:"true"`
+
+	// An array of key-value pairs. Adding tags is optional. For more information,
+	// see Using Cost Allocation Tags (http://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/cost-alloc-tags.html#allocation-what)
+	// in the AWS Billing and Cost Management User Guide.
+	Tags []Tag `type:"list"`
+
+	// Describes the input source and the way the transform job consumes it.
+	//
+	// TransformInput is a required field
+	TransformInput *TransformInput `type:"structure" required:"true"`
+
+	// The name of the transform job. The name must be unique within an AWS Region
+	// in an AWS account.
+	//
+	// TransformJobName is a required field
+	TransformJobName *string `min:"1" type:"string" required:"true"`
+
+	// Describes the results of the transform job.
+	//
+	// TransformOutput is a required field
+	TransformOutput *TransformOutput `type:"structure" required:"true"`
+
+	// Describes the resources, including ML instance types and ML instance count,
+	// to use for the transform job.
+	//
+	// TransformResources is a required field
+	TransformResources *TransformResources `type:"structure" required:"true"`
+}
+
+// String returns the string representation
+func (s CreateTransformJobInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CreateTransformJobInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *CreateTransformJobInput) Validate() error {
+	invalidParams := aws.ErrInvalidParams{Context: "CreateTransformJobInput"}
+
+	if s.ModelName == nil {
+		invalidParams.Add(aws.NewErrParamRequired("ModelName"))
+	}
+
+	if s.TransformInput == nil {
+		invalidParams.Add(aws.NewErrParamRequired("TransformInput"))
+	}
+
+	if s.TransformJobName == nil {
+		invalidParams.Add(aws.NewErrParamRequired("TransformJobName"))
+	}
+	if s.TransformJobName != nil && len(*s.TransformJobName) < 1 {
+		invalidParams.Add(aws.NewErrParamMinLen("TransformJobName", 1))
+	}
+
+	if s.TransformOutput == nil {
+		invalidParams.Add(aws.NewErrParamRequired("TransformOutput"))
+	}
+
+	if s.TransformResources == nil {
+		invalidParams.Add(aws.NewErrParamRequired("TransformResources"))
+	}
+	if s.Tags != nil {
+		for i, v := range s.Tags {
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "Tags", i), err.(aws.ErrInvalidParams))
+			}
+		}
+	}
+	if s.TransformInput != nil {
+		if err := s.TransformInput.Validate(); err != nil {
+			invalidParams.AddNested("TransformInput", err.(aws.ErrInvalidParams))
+		}
+	}
+	if s.TransformOutput != nil {
+		if err := s.TransformOutput.Validate(); err != nil {
+			invalidParams.AddNested("TransformOutput", err.(aws.ErrInvalidParams))
+		}
+	}
+	if s.TransformResources != nil {
+		if err := s.TransformResources.Validate(); err != nil {
+			invalidParams.AddNested("TransformResources", err.(aws.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/CreateTransformJobResponse
+type CreateTransformJobOutput struct {
+	_ struct{} `type:"structure"`
+
+	responseMetadata aws.Response
+
+	// The Amazon Resource Name (ARN) of the transform job.
+	//
+	// TransformJobArn is a required field
+	TransformJobArn *string `type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s CreateTransformJobOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CreateTransformJobOutput) GoString() string {
+	return s.String()
+}
+
+// SDKResponseMetdata return sthe response metadata for the API.
+func (s CreateTransformJobOutput) SDKResponseMetadata() aws.Response {
 	return s.responseMetadata
 }
 
@@ -3743,6 +4820,39 @@ func (s DeleteTagsOutput) SDKResponseMetadata() aws.Response {
 	return s.responseMetadata
 }
 
+// Gets the Amazon EC2 Container Registry path of the docker image of the model
+// that is hosted in this ProductionVariant.
+//
+// If you used the registry/repository[:tag] form to to specify the image path
+// of the primary container when you created the model hosted in this ProductionVariant,
+// the path resolves to a path of the form registry/repository[@digest]. A digest
+// is a hash value that identifies a specific version of an image. For information
+// about Amazon ECR paths, see Pulling an Image (http://docs.aws.amazon.com//AmazonECR/latest/userguide/docker-pull-ecr-image.html)
+// in the Amazon ECR User Guide.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DeployedImage
+type DeployedImage struct {
+	_ struct{} `type:"structure"`
+
+	// The date and time when the image path for the model resolved to the ResolvedImage
+	ResolutionTime *time.Time `type:"timestamp" timestampFormat:"unix"`
+
+	// The specific digest path of the image hosted in this ProductionVariant.
+	ResolvedImage *string `type:"string"`
+
+	// The image path you specified when you created the model.
+	SpecifiedImage *string `type:"string"`
+}
+
+// String returns the string representation
+func (s DeployedImage) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeployedImage) GoString() string {
+	return s.String()
+}
+
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeEndpointConfigInput
 type DescribeEndpointConfigInput struct {
 	_ struct{} `type:"structure"`
@@ -3897,8 +5007,8 @@ type DescribeEndpointOutput struct {
 	// LastModifiedTime is a required field
 	LastModifiedTime *time.Time `type:"timestamp" timestampFormat:"unix" required:"true"`
 
-	// An array of ProductionVariant objects, one for each model hosted behind this
-	// endpoint.
+	// An array of ProductionVariantSummary objects, one for each model hosted behind
+	// this endpoint.
 	ProductionVariants []ProductionVariantSummary `min:"1" type:"list"`
 }
 
@@ -3914,6 +5024,124 @@ func (s DescribeEndpointOutput) GoString() string {
 
 // SDKResponseMetdata return sthe response metadata for the API.
 func (s DescribeEndpointOutput) SDKResponseMetadata() aws.Response {
+	return s.responseMetadata
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeHyperParameterTuningJobRequest
+type DescribeHyperParameterTuningJobInput struct {
+	_ struct{} `type:"structure"`
+
+	// The name of the tuning job to describe.
+	//
+	// HyperParameterTuningJobName is a required field
+	HyperParameterTuningJobName *string `min:"1" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s DescribeHyperParameterTuningJobInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeHyperParameterTuningJobInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DescribeHyperParameterTuningJobInput) Validate() error {
+	invalidParams := aws.ErrInvalidParams{Context: "DescribeHyperParameterTuningJobInput"}
+
+	if s.HyperParameterTuningJobName == nil {
+		invalidParams.Add(aws.NewErrParamRequired("HyperParameterTuningJobName"))
+	}
+	if s.HyperParameterTuningJobName != nil && len(*s.HyperParameterTuningJobName) < 1 {
+		invalidParams.Add(aws.NewErrParamMinLen("HyperParameterTuningJobName", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeHyperParameterTuningJobResponse
+type DescribeHyperParameterTuningJobOutput struct {
+	_ struct{} `type:"structure"`
+
+	responseMetadata aws.Response
+
+	// A TrainingJobSummary object that describes the training job that completed
+	// with the best current HyperParameterTuningJobObjective.
+	BestTrainingJob *HyperParameterTrainingJobSummary `type:"structure"`
+
+	// The date and time that the tuning job started.
+	//
+	// CreationTime is a required field
+	CreationTime *time.Time `type:"timestamp" timestampFormat:"unix" required:"true"`
+
+	// If the tuning job failed, the reason it failed.
+	FailureReason *string `type:"string"`
+
+	// The date and time that the tuning job ended.
+	HyperParameterTuningEndTime *time.Time `type:"timestamp" timestampFormat:"unix"`
+
+	// The Amazon Resource Name (ARN) of the tuning job.
+	//
+	// HyperParameterTuningJobArn is a required field
+	HyperParameterTuningJobArn *string `type:"string" required:"true"`
+
+	// The HyperParameterTuningJobConfig object that specifies the configuration
+	// of the tuning job.
+	//
+	// HyperParameterTuningJobConfig is a required field
+	HyperParameterTuningJobConfig *HyperParameterTuningJobConfig `type:"structure" required:"true"`
+
+	// The name of the tuning job.
+	//
+	// HyperParameterTuningJobName is a required field
+	HyperParameterTuningJobName *string `min:"1" type:"string" required:"true"`
+
+	// The status of the tuning job: InProgress, Completed, Failed, Stopping, or
+	// Stopped.
+	//
+	// HyperParameterTuningJobStatus is a required field
+	HyperParameterTuningJobStatus HyperParameterTuningJobStatus `type:"string" required:"true" enum:"true"`
+
+	// The date and time that the status of the tuning job was modified.
+	LastModifiedTime *time.Time `type:"timestamp" timestampFormat:"unix"`
+
+	// The ObjectiveStatusCounters object that specifies the number of training
+	// jobs, categorized by the status of their final objective metric, that this
+	// tuning job launched.
+	//
+	// ObjectiveStatusCounters is a required field
+	ObjectiveStatusCounters *ObjectiveStatusCounters `type:"structure" required:"true"`
+
+	// The HyperParameterTrainingJobDefinition object that specifies the definition
+	// of the training jobs that this tuning job launches.
+	//
+	// TrainingJobDefinition is a required field
+	TrainingJobDefinition *HyperParameterTrainingJobDefinition `type:"structure" required:"true"`
+
+	// The TrainingJobStatusCounters object that specifies the number of training
+	// jobs, categorized by status, that this tuning job launched.
+	//
+	// TrainingJobStatusCounters is a required field
+	TrainingJobStatusCounters *TrainingJobStatusCounters `type:"structure" required:"true"`
+}
+
+// String returns the string representation
+func (s DescribeHyperParameterTuningJobOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeHyperParameterTuningJobOutput) GoString() string {
+	return s.String()
+}
+
+// SDKResponseMetdata return sthe response metadata for the API.
+func (s DescribeHyperParameterTuningJobOutput) SDKResponseMetadata() aws.Response {
 	return s.responseMetadata
 }
 
@@ -3984,8 +5212,8 @@ type DescribeModelOutput struct {
 	// PrimaryContainer is a required field
 	PrimaryContainer *ContainerDefinition `type:"structure" required:"true"`
 
-	// A object that specifies the VPC that this model has access to. For more information,
-	// see host-vpc
+	// A VpcConfig object that specifies the VPC that this model has access to.
+	// For more information, see host-vpc
 	VpcConfig *VpcConfig `type:"structure"`
 }
 
@@ -4282,15 +5510,46 @@ type DescribeTrainingJobOutput struct {
 	// Provides granular information about the system state. For more information,
 	// see TrainingJobStatus.
 	//
+	//    * Starting - starting the training job.
+	//
+	//    * Downloading - downloading the input data.
+	//
+	//    * Training - model training is in progress.
+	//
+	//    * Uploading - uploading the trained model.
+	//
+	//    * Stopping - stopping the training job.
+	//
+	//    * Stopped - the training job has stopped.
+	//
+	//    * MaxRuntimeExceeded - the training job exceeded the specified max run
+	//    time and has been stopped.
+	//
+	//    * Completed - the training job has completed.
+	//
+	//    * Failed - the training job has failed. The failure reason is stored in
+	//    the FailureReason field of DescribeTrainingJobResponse.
+	//
+	// The valid values for SecondaryStatus are subject to change. They primarily
+	// provide information on the progress of the training job.
+	//
 	// SecondaryStatus is a required field
 	SecondaryStatus SecondaryStatus `type:"string" required:"true" enum:"true"`
+
+	// To give an overview of the training job lifecycle, SecondaryStatusTransitions
+	// is a log of time-ordered secondary statuses that a training job has transitioned.
+	SecondaryStatusTransitions []SecondaryStatusTransition `type:"list"`
 
 	// The condition under which to stop the training job.
 	//
 	// StoppingCondition is a required field
 	StoppingCondition *StoppingCondition `type:"structure" required:"true"`
 
-	// A timestamp that indicates when model training ended.
+	// Indicates the time when the training job ends on training instances. You
+	// are billed for the time interval between the value of TrainingStartTime and
+	// this time. For successful jobs and stopped jobs, this is the time after model
+	// artifacts are uploaded. For failed jobs, this is the time when Amazon SageMaker
+	// detects a job failure.
 	TrainingEndTime *time.Time `type:"timestamp" timestampFormat:"unix"`
 
 	// The Amazon Resource Name (ARN) of the training job.
@@ -4325,11 +5584,19 @@ type DescribeTrainingJobOutput struct {
 	// TrainingJobStatus is a required field
 	TrainingJobStatus TrainingJobStatus `type:"string" required:"true" enum:"true"`
 
-	// A timestamp that indicates when training started.
+	// Indicates the time when the training job starts on training instances. You
+	// are billed for the time interval between this time and the value of TrainingEndTime.
+	// The start time in CloudWatch Logs might be later than this time. The difference
+	// is due to the time it takes to download the training data and to the size
+	// of the training container.
 	TrainingStartTime *time.Time `type:"timestamp" timestampFormat:"unix"`
 
-	// A object that specifies the VPC that this training job has access to. For
-	// more information, see train-vpc.
+	// The Amazon Resource Name (ARN) of the associated hyperparameter tuning job
+	// if the training job was launched by a hyperparameter tuning job.
+	TuningJobArn *string `type:"string"`
+
+	// A VpcConfig object that specifies the VPC that this training job has access
+	// to. For more information, see train-vpc.
 	VpcConfig *VpcConfig `type:"structure"`
 }
 
@@ -4345,6 +5612,132 @@ func (s DescribeTrainingJobOutput) GoString() string {
 
 // SDKResponseMetdata return sthe response metadata for the API.
 func (s DescribeTrainingJobOutput) SDKResponseMetadata() aws.Response {
+	return s.responseMetadata
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeTransformJobRequest
+type DescribeTransformJobInput struct {
+	_ struct{} `type:"structure"`
+
+	// The name of the transform job that you want to view details of.
+	//
+	// TransformJobName is a required field
+	TransformJobName *string `min:"1" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s DescribeTransformJobInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeTransformJobInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DescribeTransformJobInput) Validate() error {
+	invalidParams := aws.ErrInvalidParams{Context: "DescribeTransformJobInput"}
+
+	if s.TransformJobName == nil {
+		invalidParams.Add(aws.NewErrParamRequired("TransformJobName"))
+	}
+	if s.TransformJobName != nil && len(*s.TransformJobName) < 1 {
+		invalidParams.Add(aws.NewErrParamMinLen("TransformJobName", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/DescribeTransformJobResponse
+type DescribeTransformJobOutput struct {
+	_ struct{} `type:"structure"`
+
+	responseMetadata aws.Response
+
+	// SingleRecord means only one record was used per a batch. MultiRecord means
+	// batches contained as many records that could possibly fit within the MaxPayloadInMB
+	// limit.
+	BatchStrategy BatchStrategy `type:"string" enum:"true"`
+
+	// A timestamp that shows when the transform Job was created.
+	//
+	// CreationTime is a required field
+	CreationTime *time.Time `type:"timestamp" timestampFormat:"unix" required:"true"`
+
+	Environment map[string]string `type:"map"`
+
+	// If the transform job failed, the reason that it failed.
+	FailureReason *string `type:"string"`
+
+	// The maximum number of parallel requests on each instance node that can be
+	// launched in a transform job. The default value is 1.
+	MaxConcurrentTransforms *int64 `type:"integer"`
+
+	// The maximum payload size , in MB used in the transform job.
+	MaxPayloadInMB *int64 `type:"integer"`
+
+	// The name of the model used in the transform job.
+	//
+	// ModelName is a required field
+	ModelName *string `type:"string" required:"true"`
+
+	// Indicates when the transform job is Completed, Stopped, or Failed. You are
+	// billed for the time interval between this time and the value of TransformStartTime.
+	TransformEndTime *time.Time `type:"timestamp" timestampFormat:"unix"`
+
+	// Describes the dataset to be transformed and the Amazon S3 location where
+	// it is stored.
+	//
+	// TransformInput is a required field
+	TransformInput *TransformInput `type:"structure" required:"true"`
+
+	// The Amazon Resource Name (ARN) of the transform job.
+	//
+	// TransformJobArn is a required field
+	TransformJobArn *string `type:"string" required:"true"`
+
+	// The name of the transform job.
+	//
+	// TransformJobName is a required field
+	TransformJobName *string `min:"1" type:"string" required:"true"`
+
+	// The status of the transform job. If the transform job failed, the reason
+	// is returned in the FailureReason field.
+	//
+	// TransformJobStatus is a required field
+	TransformJobStatus TransformJobStatus `type:"string" required:"true" enum:"true"`
+
+	// Identifies the Amazon S3 location where you want Amazon SageMaker to save
+	// the results from the transform job.
+	TransformOutput *TransformOutput `type:"structure"`
+
+	// Describes the resources, including ML instance types and ML instance count,
+	// to use for the transform job.
+	//
+	// TransformResources is a required field
+	TransformResources *TransformResources `type:"structure" required:"true"`
+
+	// Indicates when the transform job starts on ML instances. You are billed for
+	// the time interval between this time and the value of TransformEndTime.
+	TransformStartTime *time.Time `type:"timestamp" timestampFormat:"unix"`
+}
+
+// String returns the string representation
+func (s DescribeTransformJobOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeTransformJobOutput) GoString() string {
+	return s.String()
+}
+
+// SDKResponseMetdata return sthe response metadata for the API.
+func (s DescribeTransformJobOutput) SDKResponseMetadata() aws.Response {
 	return s.responseMetadata
 }
 
@@ -4462,6 +5855,571 @@ func (s EndpointSummary) String() string {
 // GoString returns the string representation
 func (s EndpointSummary) GoString() string {
 	return s.String()
+}
+
+// Shows the final value for the objective metric for a training job that was
+// launched by a hyperparameter tuning job. You define the objective metric
+// in the HyperParameterTuningJobObjective parameter of HyperParameterTuningJobConfig.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/FinalHyperParameterTuningJobObjectiveMetric
+type FinalHyperParameterTuningJobObjectiveMetric struct {
+	_ struct{} `type:"structure"`
+
+	// The name of the objective metric.
+	//
+	// MetricName is a required field
+	MetricName *string `min:"1" type:"string" required:"true"`
+
+	// Whether to minimize or maximize the objective metric. Valid values are Minimize
+	// and Maximize.
+	Type HyperParameterTuningJobObjectiveType `type:"string" enum:"true"`
+
+	// The value of the objective metric.
+	//
+	// Value is a required field
+	Value *float64 `type:"float" required:"true"`
+}
+
+// String returns the string representation
+func (s FinalHyperParameterTuningJobObjectiveMetric) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s FinalHyperParameterTuningJobObjectiveMetric) GoString() string {
+	return s.String()
+}
+
+// Specifies which training algorithm to use for training jobs that a hyperparameter
+// tuning job launches and the metrics to monitor.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/HyperParameterAlgorithmSpecification
+type HyperParameterAlgorithmSpecification struct {
+	_ struct{} `type:"structure"`
+
+	// An array of MetricDefinition objects that specify the metrics that the algorithm
+	// emits.
+	MetricDefinitions []MetricDefinition `type:"list"`
+
+	// The registry path of the Docker image that contains the training algorithm.
+	// For information about Docker registry paths for built-in algorithms, see
+	// sagemaker-algo-docker-registry-paths.
+	//
+	// TrainingImage is a required field
+	TrainingImage *string `type:"string" required:"true"`
+
+	// The input mode that the algorithm supports: File or Pipe. In File input mode,
+	// Amazon SageMaker downloads the training data from Amazon S3 to the storage
+	// volume that is attached to the training instance and mounts the directory
+	// to the Docker volume for the training container. In Pipe input mode, Amazon
+	// SageMaker streams data directly from Amazon S3 to the container.
+	//
+	// If you specify File mode, make sure that you provision the storage volume
+	// that is attached to the training instance with enough capacity to accommodate
+	// the training data downloaded from Amazon S3, the model artifacts, and intermediate
+	// information.
+	//
+	// For more information about input modes, see Algorithms (http://docs.aws.amazon.com/sagemaker/latest/dg/algos.html)
+	//
+	// TrainingInputMode is a required field
+	TrainingInputMode TrainingInputMode `type:"string" required:"true" enum:"true"`
+}
+
+// String returns the string representation
+func (s HyperParameterAlgorithmSpecification) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s HyperParameterAlgorithmSpecification) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *HyperParameterAlgorithmSpecification) Validate() error {
+	invalidParams := aws.ErrInvalidParams{Context: "HyperParameterAlgorithmSpecification"}
+
+	if s.TrainingImage == nil {
+		invalidParams.Add(aws.NewErrParamRequired("TrainingImage"))
+	}
+	if len(s.TrainingInputMode) == 0 {
+		invalidParams.Add(aws.NewErrParamRequired("TrainingInputMode"))
+	}
+	if s.MetricDefinitions != nil {
+		for i, v := range s.MetricDefinitions {
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "MetricDefinitions", i), err.(aws.ErrInvalidParams))
+			}
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// Defines the training jobs launched by a hyperparameter tuning job.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/HyperParameterTrainingJobDefinition
+type HyperParameterTrainingJobDefinition struct {
+	_ struct{} `type:"structure"`
+
+	// The HyperParameterAlgorithmSpecification object that specifies the algorithm
+	// to use for the training jobs that the tuning job launches.
+	//
+	// AlgorithmSpecification is a required field
+	AlgorithmSpecification *HyperParameterAlgorithmSpecification `type:"structure" required:"true"`
+
+	// An array of Channel objects that specify the input for the training jobs
+	// that the tuning job launches.
+	//
+	// InputDataConfig is a required field
+	InputDataConfig []Channel `min:"1" type:"list" required:"true"`
+
+	// Specifies the path to the Amazon S3 bucket where you store model artifacts
+	// from the training jobs that the tuning job launches.
+	//
+	// OutputDataConfig is a required field
+	OutputDataConfig *OutputDataConfig `type:"structure" required:"true"`
+
+	// The resources, including the compute instances and storage volumes, to use
+	// for the training jobs that the tuning job launches.
+	//
+	// Storage volumes store model artifacts and incremental states. Training algorithms
+	// might also use storage volumes for scratch space. If you want Amazon SageMaker
+	// to use the storage volume to store the training data, choose File as the
+	// TrainingInputMode in the algorithm specification. For distributed training
+	// algorithms, specify an instance count greater than 1.
+	//
+	// ResourceConfig is a required field
+	ResourceConfig *ResourceConfig `type:"structure" required:"true"`
+
+	// The Amazon Resource Name (ARN) of the IAM role associated with the training
+	// jobs that the tuning job launches.
+	//
+	// RoleArn is a required field
+	RoleArn *string `min:"20" type:"string" required:"true"`
+
+	// Specifies the values of hyperparameters that do not change for the tuning
+	// job.
+	StaticHyperParameters map[string]string `type:"map"`
+
+	// Sets a maximum duration for the training jobs that the tuning job launches.
+	// Use this parameter to limit model training costs.
+	//
+	// To stop a job, Amazon SageMaker sends the algorithm the SIGTERM signal. This
+	// delays job termination for 120 seconds. Algorithms might use this 120-second
+	// window to save the model artifacts.
+	//
+	// When Amazon SageMaker terminates a job because the stopping condition has
+	// been met, training algorithms provided by Amazon SageMaker save the intermediate
+	// results of the job.
+	//
+	// StoppingCondition is a required field
+	StoppingCondition *StoppingCondition `type:"structure" required:"true"`
+
+	// The VpcConfig object that specifies the VPC that you want the training jobs
+	// that this hyperparameter tuning job launches to connect to. Control access
+	// to and from your training container by configuring the VPC. For more information,
+	// see train-vpc.
+	VpcConfig *VpcConfig `type:"structure"`
+}
+
+// String returns the string representation
+func (s HyperParameterTrainingJobDefinition) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s HyperParameterTrainingJobDefinition) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *HyperParameterTrainingJobDefinition) Validate() error {
+	invalidParams := aws.ErrInvalidParams{Context: "HyperParameterTrainingJobDefinition"}
+
+	if s.AlgorithmSpecification == nil {
+		invalidParams.Add(aws.NewErrParamRequired("AlgorithmSpecification"))
+	}
+
+	if s.InputDataConfig == nil {
+		invalidParams.Add(aws.NewErrParamRequired("InputDataConfig"))
+	}
+	if s.InputDataConfig != nil && len(s.InputDataConfig) < 1 {
+		invalidParams.Add(aws.NewErrParamMinLen("InputDataConfig", 1))
+	}
+
+	if s.OutputDataConfig == nil {
+		invalidParams.Add(aws.NewErrParamRequired("OutputDataConfig"))
+	}
+
+	if s.ResourceConfig == nil {
+		invalidParams.Add(aws.NewErrParamRequired("ResourceConfig"))
+	}
+
+	if s.RoleArn == nil {
+		invalidParams.Add(aws.NewErrParamRequired("RoleArn"))
+	}
+	if s.RoleArn != nil && len(*s.RoleArn) < 20 {
+		invalidParams.Add(aws.NewErrParamMinLen("RoleArn", 20))
+	}
+
+	if s.StoppingCondition == nil {
+		invalidParams.Add(aws.NewErrParamRequired("StoppingCondition"))
+	}
+	if s.AlgorithmSpecification != nil {
+		if err := s.AlgorithmSpecification.Validate(); err != nil {
+			invalidParams.AddNested("AlgorithmSpecification", err.(aws.ErrInvalidParams))
+		}
+	}
+	if s.InputDataConfig != nil {
+		for i, v := range s.InputDataConfig {
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "InputDataConfig", i), err.(aws.ErrInvalidParams))
+			}
+		}
+	}
+	if s.OutputDataConfig != nil {
+		if err := s.OutputDataConfig.Validate(); err != nil {
+			invalidParams.AddNested("OutputDataConfig", err.(aws.ErrInvalidParams))
+		}
+	}
+	if s.ResourceConfig != nil {
+		if err := s.ResourceConfig.Validate(); err != nil {
+			invalidParams.AddNested("ResourceConfig", err.(aws.ErrInvalidParams))
+		}
+	}
+	if s.StoppingCondition != nil {
+		if err := s.StoppingCondition.Validate(); err != nil {
+			invalidParams.AddNested("StoppingCondition", err.(aws.ErrInvalidParams))
+		}
+	}
+	if s.VpcConfig != nil {
+		if err := s.VpcConfig.Validate(); err != nil {
+			invalidParams.AddNested("VpcConfig", err.(aws.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// Specifies summary information about a training job.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/HyperParameterTrainingJobSummary
+type HyperParameterTrainingJobSummary struct {
+	_ struct{} `type:"structure"`
+
+	// The date and time that the training job was created.
+	//
+	// CreationTime is a required field
+	CreationTime *time.Time `type:"timestamp" timestampFormat:"unix" required:"true"`
+
+	// The reason that the training job failed.
+	FailureReason *string `type:"string"`
+
+	// The FinalHyperParameterTuningJobObjectiveMetric object that specifies the
+	// value of the objective metric of the tuning job that launched this training
+	// job.
+	FinalHyperParameterTuningJobObjectiveMetric *FinalHyperParameterTuningJobObjectiveMetric `type:"structure"`
+
+	// The status of the objective metric for the training job:
+	//
+	//    * Succeeded: The final objective metric for the training job was evaluated
+	//    by the hyperparameter tuning job and used in the hyperparameter tuning
+	//    process.
+	//
+	//    * Pending: The training job is in progress and evaluation of its final
+	//    objective metric is pending.
+	//
+	//    * Failed: The final objective metric for the training job was not evaluated,
+	//    and was not used in the hyperparameter tuning process. This typically
+	//    occurs when the training job failed or did not emit an objective metric.
+	ObjectiveStatus ObjectiveStatus `type:"string" enum:"true"`
+
+	// The date and time that the training job ended.
+	TrainingEndTime *time.Time `type:"timestamp" timestampFormat:"unix"`
+
+	// The Amazon Resource Name (ARN) of the training job.
+	//
+	// TrainingJobArn is a required field
+	TrainingJobArn *string `type:"string" required:"true"`
+
+	// The name of the training job.
+	//
+	// TrainingJobName is a required field
+	TrainingJobName *string `min:"1" type:"string" required:"true"`
+
+	// The status of the training job.
+	//
+	// TrainingJobStatus is a required field
+	TrainingJobStatus TrainingJobStatus `type:"string" required:"true" enum:"true"`
+
+	// The date and time that the training job started.
+	TrainingStartTime *time.Time `type:"timestamp" timestampFormat:"unix"`
+
+	// A list of the hyperparameters for which you specified ranges to search.
+	//
+	// TunedHyperParameters is a required field
+	TunedHyperParameters map[string]string `type:"map" required:"true"`
+}
+
+// String returns the string representation
+func (s HyperParameterTrainingJobSummary) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s HyperParameterTrainingJobSummary) GoString() string {
+	return s.String()
+}
+
+// Configures a hyperparameter tuning job.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/HyperParameterTuningJobConfig
+type HyperParameterTuningJobConfig struct {
+	_ struct{} `type:"structure"`
+
+	// The HyperParameterTuningJobObjective object that specifies the objective
+	// metric for this tuning job.
+	//
+	// HyperParameterTuningJobObjective is a required field
+	HyperParameterTuningJobObjective *HyperParameterTuningJobObjective `type:"structure" required:"true"`
+
+	// The ParameterRanges object that specifies the ranges of hyperparameters that
+	// this tuning job searches.
+	//
+	// ParameterRanges is a required field
+	ParameterRanges *ParameterRanges `type:"structure" required:"true"`
+
+	// The ResourceLimits object that specifies the maximum number of training jobs
+	// and parallel training jobs for this tuning job.
+	//
+	// ResourceLimits is a required field
+	ResourceLimits *ResourceLimits `type:"structure" required:"true"`
+
+	// Specifies the search strategy for hyperparameters. Currently, the only valid
+	// value is Bayesian.
+	//
+	// Strategy is a required field
+	Strategy HyperParameterTuningJobStrategyType `type:"string" required:"true" enum:"true"`
+}
+
+// String returns the string representation
+func (s HyperParameterTuningJobConfig) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s HyperParameterTuningJobConfig) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *HyperParameterTuningJobConfig) Validate() error {
+	invalidParams := aws.ErrInvalidParams{Context: "HyperParameterTuningJobConfig"}
+
+	if s.HyperParameterTuningJobObjective == nil {
+		invalidParams.Add(aws.NewErrParamRequired("HyperParameterTuningJobObjective"))
+	}
+
+	if s.ParameterRanges == nil {
+		invalidParams.Add(aws.NewErrParamRequired("ParameterRanges"))
+	}
+
+	if s.ResourceLimits == nil {
+		invalidParams.Add(aws.NewErrParamRequired("ResourceLimits"))
+	}
+	if len(s.Strategy) == 0 {
+		invalidParams.Add(aws.NewErrParamRequired("Strategy"))
+	}
+	if s.HyperParameterTuningJobObjective != nil {
+		if err := s.HyperParameterTuningJobObjective.Validate(); err != nil {
+			invalidParams.AddNested("HyperParameterTuningJobObjective", err.(aws.ErrInvalidParams))
+		}
+	}
+	if s.ParameterRanges != nil {
+		if err := s.ParameterRanges.Validate(); err != nil {
+			invalidParams.AddNested("ParameterRanges", err.(aws.ErrInvalidParams))
+		}
+	}
+	if s.ResourceLimits != nil {
+		if err := s.ResourceLimits.Validate(); err != nil {
+			invalidParams.AddNested("ResourceLimits", err.(aws.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// Defines the objective metric for a hyperparameter tuning job. Hyperparameter
+// tuning uses the value of this metric to evaluate the training jobs it launches,
+// and returns the training job that results in either the highest or lowest
+// value for this metric, depending on the value you specify for the Type parameter.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/HyperParameterTuningJobObjective
+type HyperParameterTuningJobObjective struct {
+	_ struct{} `type:"structure"`
+
+	// The name of the metric to use for the objective metric.
+	//
+	// MetricName is a required field
+	MetricName *string `min:"1" type:"string" required:"true"`
+
+	// Whether to minimize or maximize the objective metric.
+	//
+	// Type is a required field
+	Type HyperParameterTuningJobObjectiveType `type:"string" required:"true" enum:"true"`
+}
+
+// String returns the string representation
+func (s HyperParameterTuningJobObjective) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s HyperParameterTuningJobObjective) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *HyperParameterTuningJobObjective) Validate() error {
+	invalidParams := aws.ErrInvalidParams{Context: "HyperParameterTuningJobObjective"}
+
+	if s.MetricName == nil {
+		invalidParams.Add(aws.NewErrParamRequired("MetricName"))
+	}
+	if s.MetricName != nil && len(*s.MetricName) < 1 {
+		invalidParams.Add(aws.NewErrParamMinLen("MetricName", 1))
+	}
+	if len(s.Type) == 0 {
+		invalidParams.Add(aws.NewErrParamRequired("Type"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// Provides summary information about a hyperparameter tuning job.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/HyperParameterTuningJobSummary
+type HyperParameterTuningJobSummary struct {
+	_ struct{} `type:"structure"`
+
+	// The date and time that the tuning job was created.
+	//
+	// CreationTime is a required field
+	CreationTime *time.Time `type:"timestamp" timestampFormat:"unix" required:"true"`
+
+	// The date and time that the tuning job ended.
+	HyperParameterTuningEndTime *time.Time `type:"timestamp" timestampFormat:"unix"`
+
+	// The Amazon Resource Name (ARN) of the tuning job.
+	//
+	// HyperParameterTuningJobArn is a required field
+	HyperParameterTuningJobArn *string `type:"string" required:"true"`
+
+	// The name of the tuning job.
+	//
+	// HyperParameterTuningJobName is a required field
+	HyperParameterTuningJobName *string `min:"1" type:"string" required:"true"`
+
+	// The status of the tuning job.
+	//
+	// HyperParameterTuningJobStatus is a required field
+	HyperParameterTuningJobStatus HyperParameterTuningJobStatus `type:"string" required:"true" enum:"true"`
+
+	// The date and time that the tuning job was modified.
+	LastModifiedTime *time.Time `type:"timestamp" timestampFormat:"unix"`
+
+	// The ObjectiveStatusCounters object that specifies the numbers of training
+	// jobs, categorized by objective metric status, that this tuning job launched.
+	//
+	// ObjectiveStatusCounters is a required field
+	ObjectiveStatusCounters *ObjectiveStatusCounters `type:"structure" required:"true"`
+
+	// The ResourceLimits object that specifies the maximum number of training jobs
+	// and parallel training jobs allowed for this tuning job.
+	ResourceLimits *ResourceLimits `type:"structure"`
+
+	// Specifies the search strategy hyperparameter tuning uses to choose which
+	// hyperparameters to use for each iteration. Currently, the only valid value
+	// is Bayesian.
+	//
+	// Strategy is a required field
+	Strategy HyperParameterTuningJobStrategyType `type:"string" required:"true" enum:"true"`
+
+	// The TrainingJobStatusCounters object that specifies the numbers of training
+	// jobs, categorized by status, that this tuning job launched.
+	//
+	// TrainingJobStatusCounters is a required field
+	TrainingJobStatusCounters *TrainingJobStatusCounters `type:"structure" required:"true"`
+}
+
+// String returns the string representation
+func (s HyperParameterTuningJobSummary) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s HyperParameterTuningJobSummary) GoString() string {
+	return s.String()
+}
+
+// For a hyperparameter of the integer type, specifies the range that a hyperparameter
+// tuning job searches.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/IntegerParameterRange
+type IntegerParameterRange struct {
+	_ struct{} `type:"structure"`
+
+	// The maximum value of the hyperparameter to search.
+	//
+	// MaxValue is a required field
+	MaxValue *string `type:"string" required:"true"`
+
+	// The minimum value of the hyperparameter to search.
+	//
+	// MinValue is a required field
+	MinValue *string `type:"string" required:"true"`
+
+	// The name of the hyperparameter to search.
+	//
+	// Name is a required field
+	Name *string `type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s IntegerParameterRange) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s IntegerParameterRange) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *IntegerParameterRange) Validate() error {
+	invalidParams := aws.ErrInvalidParams{Context: "IntegerParameterRange"}
+
+	if s.MaxValue == nil {
+		invalidParams.Add(aws.NewErrParamRequired("MaxValue"))
+	}
+
+	if s.MinValue == nil {
+		invalidParams.Add(aws.NewErrParamRequired("MinValue"))
+	}
+
+	if s.Name == nil {
+		invalidParams.Add(aws.NewErrParamRequired("Name"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListEndpointConfigsInput
@@ -4642,6 +6600,104 @@ func (s ListEndpointsOutput) GoString() string {
 
 // SDKResponseMetdata return sthe response metadata for the API.
 func (s ListEndpointsOutput) SDKResponseMetadata() aws.Response {
+	return s.responseMetadata
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListHyperParameterTuningJobsRequest
+type ListHyperParameterTuningJobsInput struct {
+	_ struct{} `type:"structure"`
+
+	// A filter that returns only tuning jobs that were created after the specified
+	// time.
+	CreationTimeAfter *time.Time `type:"timestamp" timestampFormat:"unix"`
+
+	// A filter that returns only tuning jobs that were created before the specified
+	// time.
+	CreationTimeBefore *time.Time `type:"timestamp" timestampFormat:"unix"`
+
+	// A filter that returns only tuning jobs that were modified after the specified
+	// time.
+	LastModifiedTimeAfter *time.Time `type:"timestamp" timestampFormat:"unix"`
+
+	// A filter that returns only tuning jobs that were modified before the specified
+	// time.
+	LastModifiedTimeBefore *time.Time `type:"timestamp" timestampFormat:"unix"`
+
+	// The maximum number of tuning jobs to return. The default value is 10.
+	MaxResults *int64 `min:"1" type:"integer"`
+
+	// A string in the tuning job name. This filter returns only tuning jobs whose
+	// name contains the specified string.
+	NameContains *string `type:"string"`
+
+	// If the result of the previous ListHyperParameterTuningJobs request was truncated,
+	// the response includes a NextToken. To retrieve the next set of tuning jobs,
+	// use the token in the next request.
+	NextToken *string `type:"string"`
+
+	// The field to sort results by. The default is Name.
+	SortBy HyperParameterTuningJobSortByOptions `type:"string" enum:"true"`
+
+	// The sort order for results. The default is Ascending.
+	SortOrder SortOrder `type:"string" enum:"true"`
+
+	// A filter that returns only tuning jobs with the specified status.
+	StatusEquals HyperParameterTuningJobStatus `type:"string" enum:"true"`
+}
+
+// String returns the string representation
+func (s ListHyperParameterTuningJobsInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ListHyperParameterTuningJobsInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ListHyperParameterTuningJobsInput) Validate() error {
+	invalidParams := aws.ErrInvalidParams{Context: "ListHyperParameterTuningJobsInput"}
+	if s.MaxResults != nil && *s.MaxResults < 1 {
+		invalidParams.Add(aws.NewErrParamMinValue("MaxResults", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListHyperParameterTuningJobsResponse
+type ListHyperParameterTuningJobsOutput struct {
+	_ struct{} `type:"structure"`
+
+	responseMetadata aws.Response
+
+	// A list of HyperParameterTuningJobSummary objects that describe the tuning
+	// jobs that the ListHyperParameterTuningJobs request returned.
+	//
+	// HyperParameterTuningJobSummaries is a required field
+	HyperParameterTuningJobSummaries []HyperParameterTuningJobSummary `type:"list" required:"true"`
+
+	// If the result of this ListHyperParameterTuningJobs request was truncated,
+	// the response includes a NextToken. To retrieve the next set of tuning jobs,
+	// use the token in the next request.
+	NextToken *string `type:"string"`
+}
+
+// String returns the string representation
+func (s ListHyperParameterTuningJobsOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ListHyperParameterTuningJobsOutput) GoString() string {
+	return s.String()
+}
+
+// SDKResponseMetdata return sthe response metadata for the API.
+func (s ListHyperParameterTuningJobsOutput) SDKResponseMetadata() aws.Response {
 	return s.responseMetadata
 }
 
@@ -4999,11 +7055,105 @@ func (s ListTagsOutput) SDKResponseMetadata() aws.Response {
 	return s.responseMetadata
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListTrainingJobsForHyperParameterTuningJobRequest
+type ListTrainingJobsForHyperParameterTuningJobInput struct {
+	_ struct{} `type:"structure"`
+
+	// The name of the tuning job whose training jobs you want to list.
+	//
+	// HyperParameterTuningJobName is a required field
+	HyperParameterTuningJobName *string `min:"1" type:"string" required:"true"`
+
+	// The maximum number of training jobs to return. The default value is 10.
+	MaxResults *int64 `min:"1" type:"integer"`
+
+	// If the result of the previous ListTrainingJobsForHyperParameterTuningJob
+	// request was truncated, the response includes a NextToken. To retrieve the
+	// next set of training jobs, use the token in the next request.
+	NextToken *string `type:"string"`
+
+	// The field to sort results by. The default is Name.
+	//
+	// If the value of this field is FinalObjectiveMetricValue, any training jobs
+	// that did not return an objective metric are not listed.
+	SortBy TrainingJobSortByOptions `type:"string" enum:"true"`
+
+	// The sort order for results. The default is Ascending.
+	SortOrder SortOrder `type:"string" enum:"true"`
+
+	// A filter that returns only training jobs with the specified status.
+	StatusEquals TrainingJobStatus `type:"string" enum:"true"`
+}
+
+// String returns the string representation
+func (s ListTrainingJobsForHyperParameterTuningJobInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ListTrainingJobsForHyperParameterTuningJobInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ListTrainingJobsForHyperParameterTuningJobInput) Validate() error {
+	invalidParams := aws.ErrInvalidParams{Context: "ListTrainingJobsForHyperParameterTuningJobInput"}
+
+	if s.HyperParameterTuningJobName == nil {
+		invalidParams.Add(aws.NewErrParamRequired("HyperParameterTuningJobName"))
+	}
+	if s.HyperParameterTuningJobName != nil && len(*s.HyperParameterTuningJobName) < 1 {
+		invalidParams.Add(aws.NewErrParamMinLen("HyperParameterTuningJobName", 1))
+	}
+	if s.MaxResults != nil && *s.MaxResults < 1 {
+		invalidParams.Add(aws.NewErrParamMinValue("MaxResults", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListTrainingJobsForHyperParameterTuningJobResponse
+type ListTrainingJobsForHyperParameterTuningJobOutput struct {
+	_ struct{} `type:"structure"`
+
+	responseMetadata aws.Response
+
+	// If the result of this ListTrainingJobsForHyperParameterTuningJob request
+	// was truncated, the response includes a NextToken. To retrieve the next set
+	// of training jobs, use the token in the next request.
+	NextToken *string `type:"string"`
+
+	// A list of TrainingJobSummary objects that describe the training jobs that
+	// the ListTrainingJobsForHyperParameterTuningJob request returned.
+	//
+	// TrainingJobSummaries is a required field
+	TrainingJobSummaries []HyperParameterTrainingJobSummary `type:"list" required:"true"`
+}
+
+// String returns the string representation
+func (s ListTrainingJobsForHyperParameterTuningJobOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ListTrainingJobsForHyperParameterTuningJobOutput) GoString() string {
+	return s.String()
+}
+
+// SDKResponseMetdata return sthe response metadata for the API.
+func (s ListTrainingJobsForHyperParameterTuningJobOutput) SDKResponseMetadata() aws.Response {
+	return s.responseMetadata
+}
+
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListTrainingJobsRequest
 type ListTrainingJobsInput struct {
 	_ struct{} `type:"structure"`
 
-	// A filter that only training jobs created after the specified time (timestamp).
+	// A filter that returns only training jobs created after the specified time
+	// (timestamp).
 	CreationTimeAfter *time.Time `type:"timestamp" timestampFormat:"unix"`
 
 	// A filter that returns only training jobs created before the specified time
@@ -5021,8 +7171,8 @@ type ListTrainingJobsInput struct {
 	// The maximum number of training jobs to return in the response.
 	MaxResults *int64 `min:"1" type:"integer"`
 
-	// A string in the training job name. This filter returns only models whose
-	// name contains the specified string.
+	// A string in the training job name. This filter returns only training jobs
+	// whose name contains the specified string.
 	NameContains *string `type:"string"`
 
 	// If the result of the previous ListTrainingJobs request was truncated, the
@@ -5092,6 +7242,154 @@ func (s ListTrainingJobsOutput) GoString() string {
 // SDKResponseMetdata return sthe response metadata for the API.
 func (s ListTrainingJobsOutput) SDKResponseMetadata() aws.Response {
 	return s.responseMetadata
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListTransformJobsRequest
+type ListTransformJobsInput struct {
+	_ struct{} `type:"structure"`
+
+	// A filter that returns only transform jobs created after the specified time.
+	CreationTimeAfter *time.Time `type:"timestamp" timestampFormat:"unix"`
+
+	// A filter that returns only transform jobs created before the specified time.
+	CreationTimeBefore *time.Time `type:"timestamp" timestampFormat:"unix"`
+
+	// A filter that returns only transform jobs modified after the specified time.
+	LastModifiedTimeAfter *time.Time `type:"timestamp" timestampFormat:"unix"`
+
+	// A filter that returns only transform jobs modified before the specified time.
+	LastModifiedTimeBefore *time.Time `type:"timestamp" timestampFormat:"unix"`
+
+	// The maximum number of transform jobs to return in the response. The default
+	// value is 10.
+	MaxResults *int64 `min:"1" type:"integer"`
+
+	// A string in the transform job name. This filter returns only transform jobs
+	// whose name contains the specified string.
+	NameContains *string `type:"string"`
+
+	// If the result of the previous ListTransformJobs request was truncated, the
+	// response includes a NextToken. To retrieve the next set of transform jobs,
+	// use the token in the next request.
+	NextToken *string `type:"string"`
+
+	// The field to sort results by. The default is CreationTime.
+	SortBy SortBy `type:"string" enum:"true"`
+
+	// The sort order for results. The default is Descending.
+	SortOrder SortOrder `type:"string" enum:"true"`
+
+	// A filter that retrieves only transform jobs with a specific status.
+	StatusEquals TransformJobStatus `type:"string" enum:"true"`
+}
+
+// String returns the string representation
+func (s ListTransformJobsInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ListTransformJobsInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ListTransformJobsInput) Validate() error {
+	invalidParams := aws.ErrInvalidParams{Context: "ListTransformJobsInput"}
+	if s.MaxResults != nil && *s.MaxResults < 1 {
+		invalidParams.Add(aws.NewErrParamMinValue("MaxResults", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ListTransformJobsResponse
+type ListTransformJobsOutput struct {
+	_ struct{} `type:"structure"`
+
+	responseMetadata aws.Response
+
+	// If the response is truncated, Amazon SageMaker returns this token. To retrieve
+	// the next set of transform jobs, use it in the next request.
+	NextToken *string `type:"string"`
+
+	// An array of TransformJobSummary objects.
+	//
+	// TransformJobSummaries is a required field
+	TransformJobSummaries []TransformJobSummary `type:"list" required:"true"`
+}
+
+// String returns the string representation
+func (s ListTransformJobsOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ListTransformJobsOutput) GoString() string {
+	return s.String()
+}
+
+// SDKResponseMetdata return sthe response metadata for the API.
+func (s ListTransformJobsOutput) SDKResponseMetadata() aws.Response {
+	return s.responseMetadata
+}
+
+// Specifies a metric that the training algorithm writes to stderr or stdout.
+// Amazon SageMakerHyperparamter tuning captures all defined metrics. You specify
+// one metric that a hyperparameter tuning job uses as its objective metric
+// to choose the best training job.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/MetricDefinition
+type MetricDefinition struct {
+	_ struct{} `type:"structure"`
+
+	// The name of the metric.
+	//
+	// Name is a required field
+	Name *string `min:"1" type:"string" required:"true"`
+
+	// A regular expression that searches the output of a training job and gets
+	// the value of the metric. For more information about using regular expressions
+	// to define metrics, see automatic-model-tuning-define-metrics.
+	//
+	// Regex is a required field
+	Regex *string `min:"1" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s MetricDefinition) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s MetricDefinition) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *MetricDefinition) Validate() error {
+	invalidParams := aws.ErrInvalidParams{Context: "MetricDefinition"}
+
+	if s.Name == nil {
+		invalidParams.Add(aws.NewErrParamRequired("Name"))
+	}
+	if s.Name != nil && len(*s.Name) < 1 {
+		invalidParams.Add(aws.NewErrParamMinLen("Name", 1))
+	}
+
+	if s.Regex == nil {
+		invalidParams.Add(aws.NewErrParamRequired("Regex"))
+	}
+	if s.Regex != nil && len(*s.Regex) < 1 {
+		invalidParams.Add(aws.NewErrParamMinLen("Regex", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // Provides information about the location that is configured for storing model
@@ -5275,6 +7573,39 @@ func (s NotebookInstanceSummary) GoString() string {
 	return s.String()
 }
 
+// Specifies the number of training jobs that this hyperparameter tuning job
+// launched, categorized by the status of their objective metric. The objective
+// metric status shows whether the final objective metric for the training job
+// has been evaluated by the tuning job and used in the hyperparameter tuning
+// process.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ObjectiveStatusCounters
+type ObjectiveStatusCounters struct {
+	_ struct{} `type:"structure"`
+
+	// The number of training jobs whose final objective metric was not evaluated
+	// and used in the hyperparameter tuning process. This typically occurs when
+	// the training job failed or did not emit an objective metric.
+	Failed *int64 `type:"integer"`
+
+	// The number of training jobs that are in progress and pending evaluation of
+	// their final objective metric.
+	Pending *int64 `type:"integer"`
+
+	// The number of training jobs whose final objective metric was evaluated by
+	// the hyperparameter tuning job and used in the hyperparameter tuning process.
+	Succeeded *int64 `type:"integer"`
+}
+
+// String returns the string representation
+func (s ObjectiveStatusCounters) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ObjectiveStatusCounters) GoString() string {
+	return s.String()
+}
+
 // Provides information about how to store model training results (model artifacts).
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/OutputDataConfig
 type OutputDataConfig struct {
@@ -5283,10 +7614,9 @@ type OutputDataConfig struct {
 	// The AWS Key Management Service (AWS KMS) key that Amazon SageMaker uses to
 	// encrypt the model artifacts at rest using Amazon S3 server-side encryption.
 	//
-	// If the configuration of the output S3 bucket requires server-side encryption
-	// for objects, and you don't provide the KMS key ID, Amazon SageMaker uses
-	// the default service key. For more information, see KMS-Managed Encryption
-	// Keys (https://docs.aws.amazon.com/AmazonS3/latest/dev/UsingKMSEncryption.html)
+	// If you don't provide the KMS key ID, Amazon SageMaker uses the default KMS
+	// key for Amazon S3 for your role's account. For more information, see KMS-Managed
+	// Encryption Keys (https://docs.aws.amazon.com/AmazonS3/latest/dev/UsingKMSEncryption.html)
 	// in Amazon Simple Storage Service developer guide.
 	//
 	// The KMS key policy must grant permission to the IAM role you specify in your
@@ -5317,6 +7647,66 @@ func (s *OutputDataConfig) Validate() error {
 
 	if s.S3OutputPath == nil {
 		invalidParams.Add(aws.NewErrParamRequired("S3OutputPath"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// Specifies ranges of integer, continuous, and categorical hyperparameters
+// that a hyperparameter tuning job searches.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ParameterRanges
+type ParameterRanges struct {
+	_ struct{} `type:"structure"`
+
+	// The array of CategoricalParameterRange objects that specify ranges of categorical
+	// hyperparameters that a hyperparameter tuning job searches.
+	CategoricalParameterRanges []CategoricalParameterRange `type:"list"`
+
+	// The array of ContinuousParameterRange objects that specify ranges of continuous
+	// hyperparameters that a hyperparameter tuning job searches.
+	ContinuousParameterRanges []ContinuousParameterRange `type:"list"`
+
+	// The array of IntegerParameterRange objects that specify ranges of integer
+	// hyperparameters that a hyperparameter tuning job searches.
+	IntegerParameterRanges []IntegerParameterRange `type:"list"`
+}
+
+// String returns the string representation
+func (s ParameterRanges) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ParameterRanges) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ParameterRanges) Validate() error {
+	invalidParams := aws.ErrInvalidParams{Context: "ParameterRanges"}
+	if s.CategoricalParameterRanges != nil {
+		for i, v := range s.CategoricalParameterRanges {
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "CategoricalParameterRanges", i), err.(aws.ErrInvalidParams))
+			}
+		}
+	}
+	if s.ContinuousParameterRanges != nil {
+		for i, v := range s.ContinuousParameterRanges {
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "ContinuousParameterRanges", i), err.(aws.ErrInvalidParams))
+			}
+		}
+	}
+	if s.IntegerParameterRanges != nil {
+		for i, v := range s.IntegerParameterRanges {
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "IntegerParameterRanges", i), err.(aws.ErrInvalidParams))
+			}
+		}
 	}
 
 	if invalidParams.Len() > 0 {
@@ -5412,6 +7802,10 @@ type ProductionVariantSummary struct {
 	// The weight associated with the variant.
 	CurrentWeight *float64 `type:"float"`
 
+	// An array of DeployedImage objects that specify the Amazon EC2 Container Registry
+	// paths of the inference images deployed on instances of this ProductionVariant.
+	DeployedImages []DeployedImage `type:"list"`
+
 	// The number of instances requested in the UpdateEndpointWeightsAndCapacities
 	// request.
 	DesiredInstanceCount *int64 `min:"1" type:"integer"`
@@ -5503,6 +7897,59 @@ func (s *ResourceConfig) Validate() error {
 	}
 	if s.VolumeSizeInGB != nil && *s.VolumeSizeInGB < 1 {
 		invalidParams.Add(aws.NewErrParamMinValue("VolumeSizeInGB", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// Specifies the maximum number of training jobs and parallel training jobs
+// that a hyperparameter tuning job can launch.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ResourceLimits
+type ResourceLimits struct {
+	_ struct{} `type:"structure"`
+
+	// The maximum number of training jobs that a hyperparameter tuning job can
+	// launch.
+	//
+	// MaxNumberOfTrainingJobs is a required field
+	MaxNumberOfTrainingJobs *int64 `min:"1" type:"integer" required:"true"`
+
+	// The maximum number of concurrent training jobs that a hyperparameter tuning
+	// job can launch.
+	//
+	// MaxParallelTrainingJobs is a required field
+	MaxParallelTrainingJobs *int64 `min:"1" type:"integer" required:"true"`
+}
+
+// String returns the string representation
+func (s ResourceLimits) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ResourceLimits) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ResourceLimits) Validate() error {
+	invalidParams := aws.ErrInvalidParams{Context: "ResourceLimits"}
+
+	if s.MaxNumberOfTrainingJobs == nil {
+		invalidParams.Add(aws.NewErrParamRequired("MaxNumberOfTrainingJobs"))
+	}
+	if s.MaxNumberOfTrainingJobs != nil && *s.MaxNumberOfTrainingJobs < 1 {
+		invalidParams.Add(aws.NewErrParamMinValue("MaxNumberOfTrainingJobs", 1))
+	}
+
+	if s.MaxParallelTrainingJobs == nil {
+		invalidParams.Add(aws.NewErrParamRequired("MaxParallelTrainingJobs"))
+	}
+	if s.MaxParallelTrainingJobs != nil && *s.MaxParallelTrainingJobs < 1 {
+		invalidParams.Add(aws.NewErrParamMinValue("MaxParallelTrainingJobs", 1))
 	}
 
 	if invalidParams.Len() > 0 {
@@ -5613,6 +8060,46 @@ func (s *S3DataSource) Validate() error {
 	return nil
 }
 
+// Specifies a secondary status the job has transitioned into. It includes a
+// start timestamp and later an end timestamp. The end timestamp is added either
+// after the job transitions to a different secondary status or after the job
+// has ended.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/SecondaryStatusTransition
+type SecondaryStatusTransition struct {
+	_ struct{} `type:"structure"`
+
+	// A timestamp that shows when the secondary status has ended and the job has
+	// transitioned into another secondary status. The EndTime timestamp is also
+	// set after the training job has ended.
+	EndTime *time.Time `type:"timestamp" timestampFormat:"unix"`
+
+	// A timestamp that shows when the training job has entered this secondary status.
+	//
+	// StartTime is a required field
+	StartTime *time.Time `type:"timestamp" timestampFormat:"unix" required:"true"`
+
+	// Provides granular information about the system state. For more information,
+	// see SecondaryStatus under the DescribeTrainingJob response elements.
+	//
+	// Status is a required field
+	Status SecondaryStatus `type:"string" required:"true" enum:"true"`
+
+	// Shows a brief description and other information about the secondary status.
+	// For example, the LaunchingMLInstances secondary status could show a status
+	// message of "Insufficent capacity error while launching instances".
+	StatusMessage *string `type:"string"`
+}
+
+// String returns the string representation
+func (s SecondaryStatusTransition) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s SecondaryStatusTransition) GoString() string {
+	return s.String()
+}
+
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/StartNotebookInstanceInput
 type StartNotebookInstanceInput struct {
 	_ struct{} `type:"structure"`
@@ -5666,6 +8153,65 @@ func (s StartNotebookInstanceOutput) GoString() string {
 
 // SDKResponseMetdata return sthe response metadata for the API.
 func (s StartNotebookInstanceOutput) SDKResponseMetadata() aws.Response {
+	return s.responseMetadata
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/StopHyperParameterTuningJobRequest
+type StopHyperParameterTuningJobInput struct {
+	_ struct{} `type:"structure"`
+
+	// The name of the tuning job to stop.
+	//
+	// HyperParameterTuningJobName is a required field
+	HyperParameterTuningJobName *string `min:"1" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s StopHyperParameterTuningJobInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s StopHyperParameterTuningJobInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *StopHyperParameterTuningJobInput) Validate() error {
+	invalidParams := aws.ErrInvalidParams{Context: "StopHyperParameterTuningJobInput"}
+
+	if s.HyperParameterTuningJobName == nil {
+		invalidParams.Add(aws.NewErrParamRequired("HyperParameterTuningJobName"))
+	}
+	if s.HyperParameterTuningJobName != nil && len(*s.HyperParameterTuningJobName) < 1 {
+		invalidParams.Add(aws.NewErrParamMinLen("HyperParameterTuningJobName", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/StopHyperParameterTuningJobOutput
+type StopHyperParameterTuningJobOutput struct {
+	_ struct{} `type:"structure"`
+
+	responseMetadata aws.Response
+}
+
+// String returns the string representation
+func (s StopHyperParameterTuningJobOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s StopHyperParameterTuningJobOutput) GoString() string {
+	return s.String()
+}
+
+// SDKResponseMetdata return sthe response metadata for the API.
+func (s StopHyperParameterTuningJobOutput) SDKResponseMetadata() aws.Response {
 	return s.responseMetadata
 }
 
@@ -5784,6 +8330,65 @@ func (s StopTrainingJobOutput) SDKResponseMetadata() aws.Response {
 	return s.responseMetadata
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/StopTransformJobRequest
+type StopTransformJobInput struct {
+	_ struct{} `type:"structure"`
+
+	// The name of the transform job to stop.
+	//
+	// TransformJobName is a required field
+	TransformJobName *string `min:"1" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s StopTransformJobInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s StopTransformJobInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *StopTransformJobInput) Validate() error {
+	invalidParams := aws.ErrInvalidParams{Context: "StopTransformJobInput"}
+
+	if s.TransformJobName == nil {
+		invalidParams.Add(aws.NewErrParamRequired("TransformJobName"))
+	}
+	if s.TransformJobName != nil && len(*s.TransformJobName) < 1 {
+		invalidParams.Add(aws.NewErrParamMinLen("TransformJobName", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/StopTransformJobOutput
+type StopTransformJobOutput struct {
+	_ struct{} `type:"structure"`
+
+	responseMetadata aws.Response
+}
+
+// String returns the string representation
+func (s StopTransformJobOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s StopTransformJobOutput) GoString() string {
+	return s.String()
+}
+
+// SDKResponseMetdata return sthe response metadata for the API.
+func (s StopTransformJobOutput) SDKResponseMetadata() aws.Response {
+	return s.responseMetadata
+}
+
 // Specifies how long model training can run. When model training reaches the
 // limit, Amazon SageMaker ends the training job. Use this API to cap model
 // training cost.
@@ -5878,6 +8483,43 @@ func (s *Tag) Validate() error {
 	return nil
 }
 
+// The numbers of training jobs launched by a hyperparameter tuning job, categorized
+// by status.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/TrainingJobStatusCounters
+type TrainingJobStatusCounters struct {
+	_ struct{} `type:"structure"`
+
+	// The number of completed training jobs launched by a hyperparameter tuning
+	// job.
+	Completed *int64 `type:"integer"`
+
+	// The number of in-progress training jobs launched by a hyperparameter tuning
+	// job.
+	InProgress *int64 `type:"integer"`
+
+	// The number of training jobs that failed and can't be retried. A failed training
+	// job can't be retried if it failed because a client error occurred.
+	NonRetryableError *int64 `type:"integer"`
+
+	// The number of training jobs that failed, but can be retried. A failed training
+	// job can be retried only if it failed because an internal service error occurred.
+	RetryableError *int64 `type:"integer"`
+
+	// The number of training jobs launched by a hyperparameter tuning job that
+	// were manually stopped.
+	Stopped *int64 `type:"integer"`
+}
+
+// String returns the string representation
+func (s TrainingJobStatusCounters) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s TrainingJobStatusCounters) GoString() string {
+	return s.String()
+}
+
 // Provides summary information about a training job.
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/TrainingJobSummary
 type TrainingJobSummary struct {
@@ -5920,6 +8562,366 @@ func (s TrainingJobSummary) String() string {
 // GoString returns the string representation
 func (s TrainingJobSummary) GoString() string {
 	return s.String()
+}
+
+// Describes the location of the channel data.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/TransformDataSource
+type TransformDataSource struct {
+	_ struct{} `type:"structure"`
+
+	// The S3 location of the data source that is associated with a channel.
+	//
+	// S3DataSource is a required field
+	S3DataSource *TransformS3DataSource `type:"structure" required:"true"`
+}
+
+// String returns the string representation
+func (s TransformDataSource) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s TransformDataSource) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *TransformDataSource) Validate() error {
+	invalidParams := aws.ErrInvalidParams{Context: "TransformDataSource"}
+
+	if s.S3DataSource == nil {
+		invalidParams.Add(aws.NewErrParamRequired("S3DataSource"))
+	}
+	if s.S3DataSource != nil {
+		if err := s.S3DataSource.Validate(); err != nil {
+			invalidParams.AddNested("S3DataSource", err.(aws.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// Describes the input source of a transform job and the way the transform job
+// consumes it.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/TransformInput
+type TransformInput struct {
+	_ struct{} `type:"structure"`
+
+	// Compressing data helps save on storage space. If your transform data is compressed,
+	// specify the compression type.and Amazon SageMaker will automatically decompress
+	// the data for the transform job accordingly. The default value is None.
+	CompressionType CompressionType `type:"string" enum:"true"`
+
+	// The multipurpose internet mail extension (MIME) type of the data. Amazon
+	// SageMaker uses the MIME type with each http call to transfer data to the
+	// transform job.
+	ContentType *string `type:"string"`
+
+	// Describes the location of the channel data, meaning the S3 location of the
+	// input data that the model can consume.
+	//
+	// DataSource is a required field
+	DataSource *TransformDataSource `type:"structure" required:"true"`
+
+	// The method to use to split the transform job's data into smaller batches.
+	// The default value is None. If you don't want to split the data, specify None.
+	// If you want to split records on a newline character boundary, specify Line.
+	// To split records according to the RecordIO format, specify RecordIO.
+	//
+	// Amazon SageMaker will send maximum number of records per batch in each request
+	// up to the MaxPayloadInMB limit. For more information, see RecordIO data format
+	// (http://mxnet.io/architecture/note_data_loading.html#data-format).
+	//
+	// For information about the RecordIO format, see Data Format (http://mxnet.io/architecture/note_data_loading.html#data-format).
+	SplitType SplitType `type:"string" enum:"true"`
+}
+
+// String returns the string representation
+func (s TransformInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s TransformInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *TransformInput) Validate() error {
+	invalidParams := aws.ErrInvalidParams{Context: "TransformInput"}
+
+	if s.DataSource == nil {
+		invalidParams.Add(aws.NewErrParamRequired("DataSource"))
+	}
+	if s.DataSource != nil {
+		if err := s.DataSource.Validate(); err != nil {
+			invalidParams.AddNested("DataSource", err.(aws.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// Provides a summary information for a transform job. Multiple TransformJobSummary
+// objects are returned as a list after calling ListTransformJobs.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/TransformJobSummary
+type TransformJobSummary struct {
+	_ struct{} `type:"structure"`
+
+	// A timestamp that shows when the transform Job was created.
+	//
+	// CreationTime is a required field
+	CreationTime *time.Time `type:"timestamp" timestampFormat:"unix" required:"true"`
+
+	// If the transform job failed, the reason it failed.
+	FailureReason *string `type:"string"`
+
+	// Indicates when the transform job was last modified.
+	LastModifiedTime *time.Time `type:"timestamp" timestampFormat:"unix"`
+
+	// Indicates when the transform job ends on compute instances. For successful
+	// jobs and stopped jobs, this is the exact time recorded after the results
+	// are uploaded. For failed jobs, this is when Amazon SageMaker detected that
+	// the job failed.
+	TransformEndTime *time.Time `type:"timestamp" timestampFormat:"unix"`
+
+	// The Amazon Resource Name (ARN) of the transform job.
+	//
+	// TransformJobArn is a required field
+	TransformJobArn *string `type:"string" required:"true"`
+
+	// The name of the transform job.
+	//
+	// TransformJobName is a required field
+	TransformJobName *string `min:"1" type:"string" required:"true"`
+
+	// The status of the transform job.
+	//
+	// TransformJobStatus is a required field
+	TransformJobStatus TransformJobStatus `type:"string" required:"true" enum:"true"`
+}
+
+// String returns the string representation
+func (s TransformJobSummary) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s TransformJobSummary) GoString() string {
+	return s.String()
+}
+
+// Describes the results of a transform job output.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/TransformOutput
+type TransformOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The MIME type used to specify the output data. Amazon SageMaker uses the
+	// MIME type with each http call to transfer data from the transform job.
+	Accept *string `type:"string"`
+
+	// Defines how to assemble the results of the transform job as a single S3 object.
+	// You should select a format that is most convenient to you. To concatenate
+	// the results in binary format, specify None. To add a newline character at
+	// the end of every transformed record, specify Line. To assemble the output
+	// in RecordIO format, specify RecordIO. The default value is None.
+	//
+	// For information about the RecordIO format, see Data Format (http://mxnet.io/architecture/note_data_loading.html#data-format).
+	AssembleWith AssemblyType `type:"string" enum:"true"`
+
+	// The AWS Key Management Service (AWS KMS) key for Amazon S3 server-side encryption
+	// that Amazon SageMaker uses to encrypt the transformed data.
+	//
+	// If you don't provide a KMS key ID, Amazon SageMaker uses the default KMS
+	// key for Amazon S3 for your role's account. For more information, see KMS-Managed
+	// Encryption Keys (https://docs.aws.amazon.com/AmazonS3/latest/dev/UsingKMSEncryption.html)
+	// in the Amazon Simple Storage Service Developer Guide.
+	//
+	// The KMS key policy must grant permission to the IAM role that you specify
+	// in your CreateTramsformJob request. For more information, see Using Key Policies
+	// in AWS KMS (http://docs.aws.amazon.com/kms/latest/developerguide/key-policies.html)
+	// in the AWS Key Management Service Developer Guide.
+	KmsKeyId *string `type:"string"`
+
+	// The Amazon S3 path where you want Amazon SageMaker to store the results of
+	// the transform job. For example, s3://bucket-name/key-name-prefix.
+	//
+	// For every S3 object used as input for the transform job, the transformed
+	// data is stored in a corresponding subfolder in the location under the output
+	// prefix. For example, the input data s3://bucket-name/input-name-prefix/dataset01/data.csv
+	// will have the transformed data stored at s3://bucket-name/key-name-prefix/dataset01/,
+	// based on the original name, as a series of .part files (.part0001, part0002,
+	// etc).
+	//
+	// S3OutputPath is a required field
+	S3OutputPath *string `type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s TransformOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s TransformOutput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *TransformOutput) Validate() error {
+	invalidParams := aws.ErrInvalidParams{Context: "TransformOutput"}
+
+	if s.S3OutputPath == nil {
+		invalidParams.Add(aws.NewErrParamRequired("S3OutputPath"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// Describes the resources, including ML instance types and ML instance count,
+// to use for transform job.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/TransformResources
+type TransformResources struct {
+	_ struct{} `type:"structure"`
+
+	// The number of ML compute instances to use in the transform job. For distributed
+	// transform, provide a value greater than 1. The default value is 1.
+	//
+	// InstanceCount is a required field
+	InstanceCount *int64 `min:"1" type:"integer" required:"true"`
+
+	// The ML compute instance type for the transform job. For using built-in algorithms
+	// to transform moderately sized datasets, ml.m4.xlarge or ml.m5.large should
+	// suffice. There is no default value for InstanceType.
+	//
+	// InstanceType is a required field
+	InstanceType TransformInstanceType `type:"string" required:"true" enum:"true"`
+
+	// The Amazon Resource Name (ARN) of a AWS Key Management Service key that Amazon
+	// SageMaker uses to encrypt data on the storage volume attached to the ML compute
+	// instance(s) that run the batch transform job.
+	VolumeKmsKeyId *string `type:"string"`
+}
+
+// String returns the string representation
+func (s TransformResources) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s TransformResources) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *TransformResources) Validate() error {
+	invalidParams := aws.ErrInvalidParams{Context: "TransformResources"}
+
+	if s.InstanceCount == nil {
+		invalidParams.Add(aws.NewErrParamRequired("InstanceCount"))
+	}
+	if s.InstanceCount != nil && *s.InstanceCount < 1 {
+		invalidParams.Add(aws.NewErrParamMinValue("InstanceCount", 1))
+	}
+	if len(s.InstanceType) == 0 {
+		invalidParams.Add(aws.NewErrParamRequired("InstanceType"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// Describes the S3 data source.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/TransformS3DataSource
+type TransformS3DataSource struct {
+	_ struct{} `type:"structure"`
+
+	// If you choose S3Prefix, S3Uri identifies a key name prefix. Amazon SageMaker
+	// uses all objects with the specified key name prefix for batch transform.
+	//
+	// If you choose ManifestFile, S3Uri identifies an object that is a manifest
+	// file containing a list of object keys that you want Amazon SageMaker to use
+	// for batch transform.
+	//
+	// S3DataType is a required field
+	S3DataType S3DataType `type:"string" required:"true" enum:"true"`
+
+	// Depending on the value specified for the S3DataType, identifies either a
+	// key name prefix or a manifest. For example:
+	//
+	//    *  A key name prefix might look like this: s3://bucketname/exampleprefix.
+	//
+	//
+	//    *  A manifest might look like this: s3://bucketname/example.manifest
+	//
+	//  The manifest is an S3 object which is a JSON file with the following format:
+	//
+	//
+	// [
+	//
+	//  {"prefix": "s3://customer_bucket/some/prefix/"},
+	//
+	//  "relative/path/to/custdata-1",
+	//
+	//  "relative/path/custdata-2",
+	//
+	//  ...
+	//
+	//  ]
+	//
+	//  The preceding JSON matches the following S3Uris:
+	//
+	// s3://customer_bucket/some/prefix/relative/path/to/custdata-1
+	//
+	// s3://customer_bucket/some/prefix/relative/path/custdata-1
+	//
+	// ...
+	//
+	//  The complete set of S3Uris in this manifest constitutes the input data for
+	//    the channel for this datasource. The object that each S3Uris points to
+	//    must be readable by the IAM role that Amazon SageMaker uses to perform
+	//    tasks on your behalf.
+	//
+	// S3Uri is a required field
+	S3Uri *string `type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s TransformS3DataSource) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s TransformS3DataSource) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *TransformS3DataSource) Validate() error {
+	invalidParams := aws.ErrInvalidParams{Context: "TransformS3DataSource"}
+	if len(s.S3DataType) == 0 {
+		invalidParams.Add(aws.NewErrParamRequired("S3DataType"))
+	}
+
+	if s.S3Uri == nil {
+		invalidParams.Add(aws.NewErrParamRequired("S3Uri"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/UpdateEndpointInput
@@ -6076,15 +9078,28 @@ func (s UpdateEndpointWeightsAndCapacitiesOutput) SDKResponseMetadata() aws.Resp
 type UpdateNotebookInstanceInput struct {
 	_ struct{} `type:"structure"`
 
+	// Set to true to remove the notebook instance lifecycle configuration currently
+	// associated with the notebook instance.
+	DisassociateLifecycleConfig *bool `type:"boolean"`
+
 	// The Amazon ML compute instance type.
 	InstanceType InstanceType `type:"string" enum:"true"`
+
+	// The name of a lifecycle configuration to associate with the notebook instance.
+	// For information about lifestyle configurations, see notebook-lifecycle-config.
+	LifecycleConfigName *string `type:"string"`
 
 	// The name of the notebook instance to update.
 	//
 	// NotebookInstanceName is a required field
 	NotebookInstanceName *string `type:"string" required:"true"`
 
-	// Amazon Resource Name (ARN) of the IAM role to associate with the instance.
+	// The Amazon Resource Name (ARN) of the IAM role that Amazon SageMaker can
+	// assume to access the notebook instance. For more information, see Amazon
+	// SageMaker Roles (http://docs.aws.amazon.com/sagemaker/latest/dg/sagemaker-roles.html).
+	//
+	// To be able to pass this role to Amazon SageMaker, the caller of this API
+	// must have the iam:PassRole permission.
 	RoleArn *string `min:"20" type:"string"`
 }
 
@@ -6268,6 +9283,40 @@ func (s *VpcConfig) Validate() error {
 	return nil
 }
 
+type AssemblyType string
+
+// Enum values for AssemblyType
+const (
+	AssemblyTypeNone AssemblyType = "None"
+	AssemblyTypeLine AssemblyType = "Line"
+)
+
+func (enum AssemblyType) MarshalValue() (string, error) {
+	return string(enum), nil
+}
+
+func (enum AssemblyType) MarshalValueBuf(b []byte) ([]byte, error) {
+	b = b[0:0]
+	return append(b, enum...), nil
+}
+
+type BatchStrategy string
+
+// Enum values for BatchStrategy
+const (
+	BatchStrategyMultiRecord  BatchStrategy = "MultiRecord"
+	BatchStrategySingleRecord BatchStrategy = "SingleRecord"
+)
+
+func (enum BatchStrategy) MarshalValue() (string, error) {
+	return string(enum), nil
+}
+
+func (enum BatchStrategy) MarshalValueBuf(b []byte) ([]byte, error) {
+	b = b[0:0]
+	return append(b, enum...), nil
+}
+
 type CompressionType string
 
 // Enum values for CompressionType
@@ -6341,13 +9390,14 @@ type EndpointStatus string
 
 // Enum values for EndpointStatus
 const (
-	EndpointStatusOutOfService EndpointStatus = "OutOfService"
-	EndpointStatusCreating     EndpointStatus = "Creating"
-	EndpointStatusUpdating     EndpointStatus = "Updating"
-	EndpointStatusRollingBack  EndpointStatus = "RollingBack"
-	EndpointStatusInService    EndpointStatus = "InService"
-	EndpointStatusDeleting     EndpointStatus = "Deleting"
-	EndpointStatusFailed       EndpointStatus = "Failed"
+	EndpointStatusOutOfService   EndpointStatus = "OutOfService"
+	EndpointStatusCreating       EndpointStatus = "Creating"
+	EndpointStatusUpdating       EndpointStatus = "Updating"
+	EndpointStatusSystemUpdating EndpointStatus = "SystemUpdating"
+	EndpointStatusRollingBack    EndpointStatus = "RollingBack"
+	EndpointStatusInService      EndpointStatus = "InService"
+	EndpointStatusDeleting       EndpointStatus = "Deleting"
+	EndpointStatusFailed         EndpointStatus = "Failed"
 )
 
 func (enum EndpointStatus) MarshalValue() (string, error) {
@@ -6355,6 +9405,79 @@ func (enum EndpointStatus) MarshalValue() (string, error) {
 }
 
 func (enum EndpointStatus) MarshalValueBuf(b []byte) ([]byte, error) {
+	b = b[0:0]
+	return append(b, enum...), nil
+}
+
+type HyperParameterTuningJobObjectiveType string
+
+// Enum values for HyperParameterTuningJobObjectiveType
+const (
+	HyperParameterTuningJobObjectiveTypeMaximize HyperParameterTuningJobObjectiveType = "Maximize"
+	HyperParameterTuningJobObjectiveTypeMinimize HyperParameterTuningJobObjectiveType = "Minimize"
+)
+
+func (enum HyperParameterTuningJobObjectiveType) MarshalValue() (string, error) {
+	return string(enum), nil
+}
+
+func (enum HyperParameterTuningJobObjectiveType) MarshalValueBuf(b []byte) ([]byte, error) {
+	b = b[0:0]
+	return append(b, enum...), nil
+}
+
+type HyperParameterTuningJobSortByOptions string
+
+// Enum values for HyperParameterTuningJobSortByOptions
+const (
+	HyperParameterTuningJobSortByOptionsName         HyperParameterTuningJobSortByOptions = "Name"
+	HyperParameterTuningJobSortByOptionsStatus       HyperParameterTuningJobSortByOptions = "Status"
+	HyperParameterTuningJobSortByOptionsCreationTime HyperParameterTuningJobSortByOptions = "CreationTime"
+)
+
+func (enum HyperParameterTuningJobSortByOptions) MarshalValue() (string, error) {
+	return string(enum), nil
+}
+
+func (enum HyperParameterTuningJobSortByOptions) MarshalValueBuf(b []byte) ([]byte, error) {
+	b = b[0:0]
+	return append(b, enum...), nil
+}
+
+type HyperParameterTuningJobStatus string
+
+// Enum values for HyperParameterTuningJobStatus
+const (
+	HyperParameterTuningJobStatusCompleted  HyperParameterTuningJobStatus = "Completed"
+	HyperParameterTuningJobStatusInProgress HyperParameterTuningJobStatus = "InProgress"
+	HyperParameterTuningJobStatusFailed     HyperParameterTuningJobStatus = "Failed"
+	HyperParameterTuningJobStatusStopped    HyperParameterTuningJobStatus = "Stopped"
+	HyperParameterTuningJobStatusStopping   HyperParameterTuningJobStatus = "Stopping"
+)
+
+func (enum HyperParameterTuningJobStatus) MarshalValue() (string, error) {
+	return string(enum), nil
+}
+
+func (enum HyperParameterTuningJobStatus) MarshalValueBuf(b []byte) ([]byte, error) {
+	b = b[0:0]
+	return append(b, enum...), nil
+}
+
+// The strategy hyperparameter tuning uses to find the best combination of hyperparameters
+// for your model. Currently, the only supported value is Bayesian.
+type HyperParameterTuningJobStrategyType string
+
+// Enum values for HyperParameterTuningJobStrategyType
+const (
+	HyperParameterTuningJobStrategyTypeBayesian HyperParameterTuningJobStrategyType = "Bayesian"
+)
+
+func (enum HyperParameterTuningJobStrategyType) MarshalValue() (string, error) {
+	return string(enum), nil
+}
+
+func (enum HyperParameterTuningJobStrategyType) MarshalValueBuf(b []byte) ([]byte, error) {
 	b = b[0:0]
 	return append(b, enum...), nil
 }
@@ -6486,6 +9609,7 @@ const (
 	NotebookInstanceStatusStopped   NotebookInstanceStatus = "Stopped"
 	NotebookInstanceStatusFailed    NotebookInstanceStatus = "Failed"
 	NotebookInstanceStatusDeleting  NotebookInstanceStatus = "Deleting"
+	NotebookInstanceStatusUpdating  NotebookInstanceStatus = "Updating"
 )
 
 func (enum NotebookInstanceStatus) MarshalValue() (string, error) {
@@ -6493,6 +9617,24 @@ func (enum NotebookInstanceStatus) MarshalValue() (string, error) {
 }
 
 func (enum NotebookInstanceStatus) MarshalValueBuf(b []byte) ([]byte, error) {
+	b = b[0:0]
+	return append(b, enum...), nil
+}
+
+type ObjectiveStatus string
+
+// Enum values for ObjectiveStatus
+const (
+	ObjectiveStatusSucceeded ObjectiveStatus = "Succeeded"
+	ObjectiveStatusPending   ObjectiveStatus = "Pending"
+	ObjectiveStatusFailed    ObjectiveStatus = "Failed"
+)
+
+func (enum ObjectiveStatus) MarshalValue() (string, error) {
+	return string(enum), nil
+}
+
+func (enum ObjectiveStatus) MarshalValueBuf(b []byte) ([]byte, error) {
 	b = b[0:0]
 	return append(b, enum...), nil
 }
@@ -6616,15 +9758,18 @@ type SecondaryStatus string
 
 // Enum values for SecondaryStatus
 const (
-	SecondaryStatusStarting           SecondaryStatus = "Starting"
-	SecondaryStatusDownloading        SecondaryStatus = "Downloading"
-	SecondaryStatusTraining           SecondaryStatus = "Training"
-	SecondaryStatusUploading          SecondaryStatus = "Uploading"
-	SecondaryStatusStopping           SecondaryStatus = "Stopping"
-	SecondaryStatusStopped            SecondaryStatus = "Stopped"
-	SecondaryStatusMaxRuntimeExceeded SecondaryStatus = "MaxRuntimeExceeded"
-	SecondaryStatusCompleted          SecondaryStatus = "Completed"
-	SecondaryStatusFailed             SecondaryStatus = "Failed"
+	SecondaryStatusStarting                 SecondaryStatus = "Starting"
+	SecondaryStatusLaunchingMlinstances     SecondaryStatus = "LaunchingMLInstances"
+	SecondaryStatusPreparingTrainingStack   SecondaryStatus = "PreparingTrainingStack"
+	SecondaryStatusDownloading              SecondaryStatus = "Downloading"
+	SecondaryStatusDownloadingTrainingImage SecondaryStatus = "DownloadingTrainingImage"
+	SecondaryStatusTraining                 SecondaryStatus = "Training"
+	SecondaryStatusUploading                SecondaryStatus = "Uploading"
+	SecondaryStatusStopping                 SecondaryStatus = "Stopping"
+	SecondaryStatusStopped                  SecondaryStatus = "Stopped"
+	SecondaryStatusMaxRuntimeExceeded       SecondaryStatus = "MaxRuntimeExceeded"
+	SecondaryStatusCompleted                SecondaryStatus = "Completed"
+	SecondaryStatusFailed                   SecondaryStatus = "Failed"
 )
 
 func (enum SecondaryStatus) MarshalValue() (string, error) {
@@ -6667,6 +9812,24 @@ func (enum SortOrder) MarshalValue() (string, error) {
 }
 
 func (enum SortOrder) MarshalValueBuf(b []byte) ([]byte, error) {
+	b = b[0:0]
+	return append(b, enum...), nil
+}
+
+type SplitType string
+
+// Enum values for SplitType
+const (
+	SplitTypeNone     SplitType = "None"
+	SplitTypeLine     SplitType = "Line"
+	SplitTypeRecordIo SplitType = "RecordIO"
+)
+
+func (enum SplitType) MarshalValue() (string, error) {
+	return string(enum), nil
+}
+
+func (enum SplitType) MarshalValueBuf(b []byte) ([]byte, error) {
 	b = b[0:0]
 	return append(b, enum...), nil
 }
@@ -6729,6 +9892,25 @@ func (enum TrainingInstanceType) MarshalValueBuf(b []byte) ([]byte, error) {
 	return append(b, enum...), nil
 }
 
+type TrainingJobSortByOptions string
+
+// Enum values for TrainingJobSortByOptions
+const (
+	TrainingJobSortByOptionsName                      TrainingJobSortByOptions = "Name"
+	TrainingJobSortByOptionsCreationTime              TrainingJobSortByOptions = "CreationTime"
+	TrainingJobSortByOptionsStatus                    TrainingJobSortByOptions = "Status"
+	TrainingJobSortByOptionsFinalObjectiveMetricValue TrainingJobSortByOptions = "FinalObjectiveMetricValue"
+)
+
+func (enum TrainingJobSortByOptions) MarshalValue() (string, error) {
+	return string(enum), nil
+}
+
+func (enum TrainingJobSortByOptions) MarshalValueBuf(b []byte) ([]byte, error) {
+	b = b[0:0]
+	return append(b, enum...), nil
+}
+
 type TrainingJobStatus string
 
 // Enum values for TrainingJobStatus
@@ -6745,6 +9927,67 @@ func (enum TrainingJobStatus) MarshalValue() (string, error) {
 }
 
 func (enum TrainingJobStatus) MarshalValueBuf(b []byte) ([]byte, error) {
+	b = b[0:0]
+	return append(b, enum...), nil
+}
+
+type TransformInstanceType string
+
+// Enum values for TransformInstanceType
+const (
+	TransformInstanceTypeMlM4Xlarge   TransformInstanceType = "ml.m4.xlarge"
+	TransformInstanceTypeMlM42xlarge  TransformInstanceType = "ml.m4.2xlarge"
+	TransformInstanceTypeMlM44xlarge  TransformInstanceType = "ml.m4.4xlarge"
+	TransformInstanceTypeMlM410xlarge TransformInstanceType = "ml.m4.10xlarge"
+	TransformInstanceTypeMlM416xlarge TransformInstanceType = "ml.m4.16xlarge"
+	TransformInstanceTypeMlC4Xlarge   TransformInstanceType = "ml.c4.xlarge"
+	TransformInstanceTypeMlC42xlarge  TransformInstanceType = "ml.c4.2xlarge"
+	TransformInstanceTypeMlC44xlarge  TransformInstanceType = "ml.c4.4xlarge"
+	TransformInstanceTypeMlC48xlarge  TransformInstanceType = "ml.c4.8xlarge"
+	TransformInstanceTypeMlP2Xlarge   TransformInstanceType = "ml.p2.xlarge"
+	TransformInstanceTypeMlP28xlarge  TransformInstanceType = "ml.p2.8xlarge"
+	TransformInstanceTypeMlP216xlarge TransformInstanceType = "ml.p2.16xlarge"
+	TransformInstanceTypeMlP32xlarge  TransformInstanceType = "ml.p3.2xlarge"
+	TransformInstanceTypeMlP38xlarge  TransformInstanceType = "ml.p3.8xlarge"
+	TransformInstanceTypeMlP316xlarge TransformInstanceType = "ml.p3.16xlarge"
+	TransformInstanceTypeMlC5Xlarge   TransformInstanceType = "ml.c5.xlarge"
+	TransformInstanceTypeMlC52xlarge  TransformInstanceType = "ml.c5.2xlarge"
+	TransformInstanceTypeMlC54xlarge  TransformInstanceType = "ml.c5.4xlarge"
+	TransformInstanceTypeMlC59xlarge  TransformInstanceType = "ml.c5.9xlarge"
+	TransformInstanceTypeMlC518xlarge TransformInstanceType = "ml.c5.18xlarge"
+	TransformInstanceTypeMlM5Large    TransformInstanceType = "ml.m5.large"
+	TransformInstanceTypeMlM5Xlarge   TransformInstanceType = "ml.m5.xlarge"
+	TransformInstanceTypeMlM52xlarge  TransformInstanceType = "ml.m5.2xlarge"
+	TransformInstanceTypeMlM54xlarge  TransformInstanceType = "ml.m5.4xlarge"
+	TransformInstanceTypeMlM512xlarge TransformInstanceType = "ml.m5.12xlarge"
+	TransformInstanceTypeMlM524xlarge TransformInstanceType = "ml.m5.24xlarge"
+)
+
+func (enum TransformInstanceType) MarshalValue() (string, error) {
+	return string(enum), nil
+}
+
+func (enum TransformInstanceType) MarshalValueBuf(b []byte) ([]byte, error) {
+	b = b[0:0]
+	return append(b, enum...), nil
+}
+
+type TransformJobStatus string
+
+// Enum values for TransformJobStatus
+const (
+	TransformJobStatusInProgress TransformJobStatus = "InProgress"
+	TransformJobStatusCompleted  TransformJobStatus = "Completed"
+	TransformJobStatusFailed     TransformJobStatus = "Failed"
+	TransformJobStatusStopping   TransformJobStatus = "Stopping"
+	TransformJobStatusStopped    TransformJobStatus = "Stopped"
+)
+
+func (enum TransformJobStatus) MarshalValue() (string, error) {
+	return string(enum), nil
+}
+
+func (enum TransformJobStatus) MarshalValueBuf(b []byte) ([]byte, error) {
 	b = b[0:0]
 	return append(b, enum...), nil
 }

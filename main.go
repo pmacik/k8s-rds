@@ -63,7 +63,7 @@ func main() {
 			execute(provider)
 		},
 	}
-	rootCmd.PersistentFlags().StringVar(&provider, "provider", "aws", "Type of provider (aws, local)")
+	rootCmd.PersistentFlags().StringVar(&provider, "provider", "aws", "Type of provider (aws)")
 	err := rootCmd.Execute()
 	if err != nil {
 		panic(err)
@@ -85,22 +85,22 @@ func execute(dbprovider string) {
 	}
 
 	// note: if the CRD exist our CreateCRD function is set to exit without an error
-	err = crd.CreateCRD(clientset)
+	_, err = crd.CreateCRD(clientset)
 	if err != nil {
 		panic(err)
 	}
 
 	// Create a new clientset which include our CRD schema
-	crdcs, scheme, err := crd.NewClient(config)
+	restClient, scheme, err := crd.NewRESTClient(config)
 	if err != nil {
 		panic(err)
 	}
 
 	// Create a CRD client interface
-	crdclient := client.CrdClient(crdcs, scheme, "")
+	crClient := client.NewCRClient(restClient, scheme, "")
 	log.Println("Watching for database changes...")
 	_, controller := cache.NewInformer(
-		crdclient.NewListWatch(),
+		crClient.NewListWatch(),
 		&crd.Database{},
 		time.Minute*2,
 		cache.ResourceEventHandlerFuncs{
@@ -111,12 +111,12 @@ func execute(dbprovider string) {
 					log.Printf("unable to get DB provider %s: %v", dbprovider, err)
 					return
 				}
-				crdClient := client.CrdClient(crdcs, scheme, db.Namespace) // add the database namespace to the client
+				crClient := client.NewCRClient(restClient, scheme, db.Namespace) // add the database namespace to the client
 				// create DB
-				hostname, err := handleCreateDatabase(db, crdClient, &provider)
+				hostname, err := handleCreateDatabase(db, crClient, &provider)
 				if err != nil {
 					log.Printf("database creation failed: %v", err)
-					err := updateStatus(db.Name, crd.DatabaseStatus{Message: fmt.Sprintf("%v", err), State: Failed}, crdClient)
+					err := updateStatus(db.Name, crd.DatabaseStatus{Message: fmt.Sprintf("%v", err), State: Failed}, crClient)
 					if err != nil {
 						log.Printf("database CRD status update failed: %v", err)
 						return
@@ -128,7 +128,7 @@ func execute(dbprovider string) {
 					DBConnectionConfig: "",
 					DBCredentials:      db.Spec.Password.Name,
 				}
-				err = updateStatus(db.Name, status, crdClient)
+				err = updateStatus(db.Name, status, crClient)
 				if err != nil {
 					log.Printf("Unable to update status: %v", err)
 					return
@@ -146,7 +146,7 @@ func execute(dbprovider string) {
 				}
 				status.Message = "Service Created"
 				status.State = "CreatingConfigMap"
-				err = updateStatus(db.Name, status, crdClient)
+				err = updateStatus(db.Name, status, crClient)
 				if err != nil {
 					log.Printf("Unable to update status: %v", err)
 					return
@@ -157,7 +157,7 @@ func execute(dbprovider string) {
 				status.Message = "ConfigMap Created"
 				status.State = "Completed"
 				status.DBConnectionConfig = cfm.GetName()
-				err = updateStatus(db.Name, status, crdClient)
+				err = updateStatus(db.Name, status, crClient)
 				if err != nil {
 					log.Printf("Unable to update status: %v", err)
 					return
@@ -222,14 +222,14 @@ func getProvider(db *crd.Database, dbprovider string) (provider.DatabaseProvider
 	return nil, fmt.Errorf("unable to find provider for %v", dbprovider)
 }
 
-func handleCreateDatabase(db *crd.Database, crdclient *client.Crdclient, dbProvider *provider.DatabaseProvider) (string, error) {
+func handleCreateDatabase(db *crd.Database, crClient *client.CRClient, dbProvider *provider.DatabaseProvider) (string, error) {
 	// validate dbname is only alpha numeric
-	err := updateStatus(db.Name, crd.DatabaseStatus{Message: "Creating", State: "Creating"}, crdclient)
+	err := updateStatus(db.Name, crd.DatabaseStatus{Message: "Creating", State: "Creating"}, crClient)
 	if err != nil {
-		return "", fmt.Errorf("database CRD status update failed: %v", err)
+		return "", fmt.Errorf("database CR status update failed: %v", err)
 	}
 
-	log.Println("trying to get kubectl")
+	log.Println("Attempting to Create a DB")
 
 	hostname, err := (*dbProvider).CreateDatabase(db)
 	if err != nil {
@@ -271,13 +271,14 @@ func ensureConfigMap(db *crd.Database, svc *v1.Service) (*v1.ConfigMap, error) {
 	return cfm, nil
 }
 
-func updateStatus(dbName string, status crd.DatabaseStatus, crdclient *client.Crdclient) error {
-	db, err := crdclient.Get(dbName)
+func updateStatus(dbName string, status crd.DatabaseStatus, crClient *client.CRClient) error {
+
+	db, err := crClient.Get(dbName)
 	if err != nil {
 		return err
 	}
 	db.Status = status
-	_, err = crdclient.Update(db)
+	db, err = crClient.Update(db)
 	if err != nil {
 		return err
 	}

@@ -17,6 +17,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
+// RDS represents AWS RDS database
 type RDS struct {
 	EC2             *ec2.EC2
 	Subnets         []string
@@ -24,6 +25,7 @@ type RDS struct {
 	ServiceProvider provider.ServiceProvider
 }
 
+// New compiles a new RDS struct based on the CR
 func New(db *crd.Database, kc *kubernetes.Clientset) (*RDS, error) {
 	ec2client, err := ec2client(kc)
 	if err != nil {
@@ -141,6 +143,7 @@ func getEndpoint(dbName *string, svc *rds.RDS) (string, error) {
 	return dbHostname, nil
 }
 
+// DeleteDatabase attempts to delete the RDS database
 func (r *RDS) DeleteDatabase(db *crd.Database) error {
 	if db.Spec.DeleteProtection {
 		log.Printf("Trying to delete a %v in %v which is a deleted protected database", db.Name, db.Namespace)
@@ -166,9 +169,8 @@ func (r *RDS) DeleteDatabase(db *crd.Database) error {
 		if err != nil {
 			log.Println(err)
 			return err
-		} else {
-			log.Println("Deleted DB instance: ", db.Spec.DBName)
 		}
+		log.Println("Deleted DB instance: ", db.Spec.DBName)
 	}
 
 	// delete the subnet group attached to the instance
@@ -179,9 +181,9 @@ func (r *RDS) DeleteDatabase(db *crd.Database) error {
 		e := errors.Wrap(err, fmt.Sprintf("unable to delete subnet %v", subnetName))
 		log.Println(e)
 		return e
-	} else {
-		log.Println("Deleted DBSubnet group: ", subnetName)
 	}
+	log.Println("Deleted DBSubnet group: ", subnetName)
+
 	return nil
 }
 

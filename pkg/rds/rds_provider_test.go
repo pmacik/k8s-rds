@@ -6,7 +6,6 @@ import (
 	"github.com/pmacik/k8s-rds/pkg/crd"
 
 	"github.com/stretchr/testify/assert"
-	v1 "k8s.io/api/core/v1"
 )
 
 func TestConvertSpecToInput(t *testing.T) {
@@ -22,7 +21,7 @@ func TestConvertSpecToInput(t *testing.T) {
 			StorageEncrypted:   true,
 			StorageType:        "bad",
 			Iops:               1000,
-			Password:           v1.SecretKeySelector{LocalObjectReference: v1.LocalObjectReference{Name: "password"}, Key: "mypassword"},
+			Password:           crd.PasswordSecret{Name: "password", Key: "mypassword"},
 		},
 	}
 	i := convertSpecToInput(db, "mysubnet", []string{"sg-1234", "sg-4321"}, "mypassword")
@@ -40,7 +39,7 @@ func TestConvertSpecToInput(t *testing.T) {
 	assert.Equal(t, int64(1000), *i.Iops)
 }
 
-func TestgetIDFromProvider(t *testing.T) {
+func TestGetIDFromProvider(t *testing.T) {
 	x := getIDFromProvider("aws:///eu-west-1a/i-02ab67f4da79c3caa")
 	assert.Equal(t, "i-02ab67f4da79c3caa", x)
 }

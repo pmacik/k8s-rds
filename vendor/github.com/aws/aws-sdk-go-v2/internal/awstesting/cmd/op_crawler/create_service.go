@@ -48,12 +48,14 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/devicefarm"
 	"github.com/aws/aws-sdk-go-v2/service/directconnect"
 	"github.com/aws/aws-sdk-go-v2/service/directoryservice"
+	"github.com/aws/aws-sdk-go-v2/service/dlm"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodbstreams"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	"github.com/aws/aws-sdk-go-v2/service/ecr"
 	"github.com/aws/aws-sdk-go-v2/service/ecs"
 	"github.com/aws/aws-sdk-go-v2/service/efs"
+	"github.com/aws/aws-sdk-go-v2/service/eks"
 	"github.com/aws/aws-sdk-go-v2/service/elasticache"
 	"github.com/aws/aws-sdk-go-v2/service/elasticbeanstalk"
 	"github.com/aws/aws-sdk-go-v2/service/elasticsearchservice"
@@ -88,6 +90,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/lexruntimeservice"
 	"github.com/aws/aws-sdk-go-v2/service/lightsail"
 	"github.com/aws/aws-sdk-go-v2/service/machinelearning"
+	"github.com/aws/aws-sdk-go-v2/service/macie"
 	"github.com/aws/aws-sdk-go-v2/service/marketplacecommerceanalytics"
 	"github.com/aws/aws-sdk-go-v2/service/marketplaceentitlementservice"
 	"github.com/aws/aws-sdk-go-v2/service/marketplacemetering"
@@ -96,14 +99,17 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/mediapackage"
 	"github.com/aws/aws-sdk-go-v2/service/mediastore"
 	"github.com/aws/aws-sdk-go-v2/service/mediastoredata"
+	"github.com/aws/aws-sdk-go-v2/service/mediatailor"
 	"github.com/aws/aws-sdk-go-v2/service/migrationhub"
 	"github.com/aws/aws-sdk-go-v2/service/mobile"
 	"github.com/aws/aws-sdk-go-v2/service/mobileanalytics"
 	"github.com/aws/aws-sdk-go-v2/service/mq"
 	"github.com/aws/aws-sdk-go-v2/service/mturk"
+	"github.com/aws/aws-sdk-go-v2/service/neptune"
 	"github.com/aws/aws-sdk-go-v2/service/opsworks"
 	"github.com/aws/aws-sdk-go-v2/service/opsworkscm"
 	"github.com/aws/aws-sdk-go-v2/service/organizations"
+	"github.com/aws/aws-sdk-go-v2/service/pi"
 	"github.com/aws/aws-sdk-go-v2/service/pinpoint"
 	"github.com/aws/aws-sdk-go-v2/service/polly"
 	"github.com/aws/aws-sdk-go-v2/service/pricing"
@@ -124,6 +130,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/ses"
 	"github.com/aws/aws-sdk-go-v2/service/sfn"
 	"github.com/aws/aws-sdk-go-v2/service/shield"
+	"github.com/aws/aws-sdk-go-v2/service/signer"
 	"github.com/aws/aws-sdk-go-v2/service/simpledb"
 	"github.com/aws/aws-sdk-go-v2/service/sms"
 	"github.com/aws/aws-sdk-go-v2/service/snowball"
@@ -200,12 +207,14 @@ func createServices(cfg aws.Config) []service {
 		{name: "devicefarm", value: reflect.ValueOf(devicefarm.New(cfg))},
 		{name: "directconnect", value: reflect.ValueOf(directconnect.New(cfg))},
 		{name: "directoryservice", value: reflect.ValueOf(directoryservice.New(cfg))},
+		{name: "dlm", value: reflect.ValueOf(dlm.New(cfg))},
 		{name: "dynamodb", value: reflect.ValueOf(dynamodb.New(cfg))},
 		{name: "dynamodbstreams", value: reflect.ValueOf(dynamodbstreams.New(cfg))},
 		{name: "ec2", value: reflect.ValueOf(ec2.New(cfg))},
 		{name: "ecr", value: reflect.ValueOf(ecr.New(cfg))},
 		{name: "ecs", value: reflect.ValueOf(ecs.New(cfg))},
 		{name: "efs", value: reflect.ValueOf(efs.New(cfg))},
+		{name: "eks", value: reflect.ValueOf(eks.New(cfg))},
 		{name: "elasticache", value: reflect.ValueOf(elasticache.New(cfg))},
 		{name: "elasticbeanstalk", value: reflect.ValueOf(elasticbeanstalk.New(cfg))},
 		{name: "elasticsearchservice", value: reflect.ValueOf(elasticsearchservice.New(cfg))},
@@ -240,6 +249,7 @@ func createServices(cfg aws.Config) []service {
 		{name: "lexruntimeservice", value: reflect.ValueOf(lexruntimeservice.New(cfg))},
 		{name: "lightsail", value: reflect.ValueOf(lightsail.New(cfg))},
 		{name: "machinelearning", value: reflect.ValueOf(machinelearning.New(cfg))},
+		{name: "macie", value: reflect.ValueOf(macie.New(cfg))},
 		{name: "marketplacecommerceanalytics", value: reflect.ValueOf(marketplacecommerceanalytics.New(cfg))},
 		{name: "marketplaceentitlementservice", value: reflect.ValueOf(marketplaceentitlementservice.New(cfg))},
 		{name: "marketplacemetering", value: reflect.ValueOf(marketplacemetering.New(cfg))},
@@ -248,14 +258,17 @@ func createServices(cfg aws.Config) []service {
 		{name: "mediapackage", value: reflect.ValueOf(mediapackage.New(cfg))},
 		{name: "mediastore", value: reflect.ValueOf(mediastore.New(cfg))},
 		{name: "mediastoredata", value: reflect.ValueOf(mediastoredata.New(cfg))},
+		{name: "mediatailor", value: reflect.ValueOf(mediatailor.New(cfg))},
 		{name: "migrationhub", value: reflect.ValueOf(migrationhub.New(cfg))},
 		{name: "mobile", value: reflect.ValueOf(mobile.New(cfg))},
 		{name: "mobileanalytics", value: reflect.ValueOf(mobileanalytics.New(cfg))},
 		{name: "mq", value: reflect.ValueOf(mq.New(cfg))},
 		{name: "mturk", value: reflect.ValueOf(mturk.New(cfg))},
+		{name: "neptune", value: reflect.ValueOf(neptune.New(cfg))},
 		{name: "opsworks", value: reflect.ValueOf(opsworks.New(cfg))},
 		{name: "opsworkscm", value: reflect.ValueOf(opsworkscm.New(cfg))},
 		{name: "organizations", value: reflect.ValueOf(organizations.New(cfg))},
+		{name: "pi", value: reflect.ValueOf(pi.New(cfg))},
 		{name: "pinpoint", value: reflect.ValueOf(pinpoint.New(cfg))},
 		{name: "polly", value: reflect.ValueOf(polly.New(cfg))},
 		{name: "pricing", value: reflect.ValueOf(pricing.New(cfg))},
@@ -276,6 +289,7 @@ func createServices(cfg aws.Config) []service {
 		{name: "ses", value: reflect.ValueOf(ses.New(cfg))},
 		{name: "sfn", value: reflect.ValueOf(sfn.New(cfg))},
 		{name: "shield", value: reflect.ValueOf(shield.New(cfg))},
+		{name: "signer", value: reflect.ValueOf(signer.New(cfg))},
 		{name: "simpledb", value: reflect.ValueOf(simpledb.New(cfg))},
 		{name: "sms", value: reflect.ValueOf(sms.New(cfg))},
 		{name: "snowball", value: reflect.ValueOf(snowball.New(cfg))},

@@ -10,61 +10,61 @@ import (
 	"k8s.io/client-go/tools/cache"
 )
 
-// This file implement all the (CRUD) client methods we need to access our CRD object
+// This file implement all the (CRUD) client methods we need to access our CR objects
 
-func CrdClient(cl *rest.RESTClient, scheme *runtime.Scheme, namespace string) *Crdclient {
-	return &Crdclient{cl: cl, ns: namespace, plural: "databases",
+func NewCRClient(restClient *rest.RESTClient, scheme *runtime.Scheme, namespace string) *CRClient {
+	return &CRClient{restClient: restClient, ns: namespace, plural: crd.CRDPlural,
 		codec: runtime.NewParameterCodec(scheme)}
 }
 
-type Crdclient struct {
-	cl     *rest.RESTClient
-	ns     string
-	plural string
-	codec  runtime.ParameterCodec
+type CRClient struct {
+	restClient *rest.RESTClient
+	ns         string
+	plural     string
+	codec      runtime.ParameterCodec
 }
 
-func (f *Crdclient) Create(obj *crd.Database) (*crd.Database, error) {
+func (crClient *CRClient) Create(obj *crd.Database) (*crd.Database, error) {
 	var result crd.Database
-	err := f.cl.Post().
-		Namespace(f.ns).Resource(f.plural).
+	err := crClient.restClient.Post().
+		Namespace(crClient.ns).Resource(crClient.plural).
 		Body(obj).Do().Into(&result)
 	return &result, err
 }
 
-func (f *Crdclient) Update(obj *crd.Database) (*crd.Database, error) {
+func (crClient *CRClient) Update(obj *crd.Database) (*crd.Database, error) {
 	var result crd.Database
-	err := f.cl.Put().
-		Namespace(f.ns).Resource(f.plural).Name(obj.Name).
+	err := crClient.restClient.Put().
+		Namespace(crClient.ns).Resource(crClient.plural).Name(obj.Name).
 		Body(obj).Do().Into(&result)
 	return &result, err
 }
 
-func (f *Crdclient) Delete(name string, options *meta_v1.DeleteOptions) error {
-	return f.cl.Delete().
-		Namespace(f.ns).Resource(f.plural).
+func (crClient *CRClient) Delete(name string, options *meta_v1.DeleteOptions) error {
+	return crClient.restClient.Delete().
+		Namespace(crClient.ns).Resource(crClient.plural).
 		Name(name).Body(options).Do().
 		Error()
 }
 
-func (f *Crdclient) Get(name string) (*crd.Database, error) {
+func (crClient *CRClient) Get(name string) (*crd.Database, error) {
 	var result crd.Database
-	err := f.cl.Get().
-		Namespace(f.ns).Resource(f.plural).
+	err := crClient.restClient.Get().
+		Namespace(crClient.ns).Resource(crClient.plural).
 		Name(name).Do().Into(&result)
 	return &result, err
 }
 
-func (f *Crdclient) List(opts meta_v1.ListOptions) (*crd.DatabaseList, error) {
+func (crClient *CRClient) List(opts meta_v1.ListOptions) (*crd.DatabaseList, error) {
 	var result crd.DatabaseList
-	err := f.cl.Get().
-		Namespace(f.ns).Resource(f.plural).
-		VersionedParams(&opts, f.codec).
+	err := crClient.restClient.Get().
+		Namespace(crClient.ns).Resource(crClient.plural).
+		VersionedParams(&opts, crClient.codec).
 		Do().Into(&result)
 	return &result, err
 }
 
 // Create a new List watch for our CRD
-func (f *Crdclient) NewListWatch() *cache.ListWatch {
-	return cache.NewListWatchFromClient(f.cl, f.plural, f.ns, fields.Everything())
+func (crClient *CRClient) NewListWatch() *cache.ListWatch {
+	return cache.NewListWatchFromClient(crClient.restClient, crClient.plural, crClient.ns, fields.Everything())
 }

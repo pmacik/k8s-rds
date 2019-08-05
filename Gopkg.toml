@@ -30,10 +30,6 @@
   name = "github.com/mitchellh/go-homedir"
 
 [[constraint]]
-  name = "github.com/pkg/errors"
-  version = "0.8.0"
-
-[[constraint]]
   branch = "master"
   name = "k8s.io/api"
 
@@ -44,7 +40,3 @@
 [[constraint]]
   branch = "master"
   name = "k8s.io/apimachinery"
-
-[[constraint]]
-  name = "k8s.io/client-go"
-  version = "6.0.0"

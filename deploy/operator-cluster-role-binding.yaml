@@ -9,4 +9,4 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: k8s-rds-operator
-  namespace: default
+  namespace: openshift-operators

@@ -123,6 +123,7 @@ uninstall-operator:
 	$(Q)-oc delete -f deploy/operator-cluster-role-binding.yaml
 	$(Q)-oc delete -f deploy/operator-service-account.yaml
 	$(Q)-oc delete -f deploy/operator-cluster-role.yaml
+	$(Q)-oc delete crd databases.aws.pmacik.dev
 
 .PHONY: deploy-operator
 ## Create deployment for operator

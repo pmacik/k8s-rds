@@ -10,9 +10,9 @@ rules:
   verbs:
   - '*'
 - apiGroups:
-  - k8s.io
+  - aws.pmacik.dev
   resources:
-  - databases
+  - '*'
   verbs:
   - '*'
 - apiGroups:
@@ -25,6 +25,7 @@ rules:
   - ""
   resources:
   - services
+  - configmaps
   verbs:
   - get
   - create

@@ -2,7 +2,7 @@ apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
   name: k8s-rds
-  namespace: default
+  namespace: openshift-operators
 spec:
   replicas: 1
   selector:
