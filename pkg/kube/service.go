@@ -6,6 +6,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/pmacik/k8s-rds/pkg/crd"
+	"github.com/pmacik/k8s-rds/pkg/provider"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -17,16 +18,16 @@ type Kube struct {
 }
 
 // create an External named service object for Kubernetes
-func (k *Kube) createServiceObj(s *v1.Service, namespace string, hostname string, internalname string) *v1.Service {
+func (k *Kube) createServiceObj(s *v1.Service, namespace string, dbEndpoint *provider.DBEndpoint, internalname string) *v1.Service {
 	var ports []v1.ServicePort
-
+	port := dbEndpoint.Port
 	ports = append(ports, v1.ServicePort{
 		Name:       fmt.Sprintf("pgsql"),
-		Port:       int32(5432),
-		TargetPort: intstr.IntOrString{IntVal: int32(5432)},
+		Port:       int32(port),
+		TargetPort: intstr.IntOrString{IntVal: int32(port)},
 	})
 	s.Spec.Type = "ExternalName"
-	s.Spec.ExternalName = hostname
+	s.Spec.ExternalName = dbEndpoint.Hostname
 
 	s.Spec.Ports = ports
 	s.Name = internalname
@@ -36,11 +37,11 @@ func (k *Kube) createServiceObj(s *v1.Service, namespace string, hostname string
 }
 
 // CreateService Creates or updates a service in Kubernetes with the new information
-func (k *Kube) CreateService(namespace string, hostname string, internalname string, owner *crd.Database) (*v1.Service, error) {
+func (k *Kube) CreateService(namespace string, dbEndpoint *provider.DBEndpoint, internalname string, owner *crd.Database) (*v1.Service, error) {
 
 	// create a service in kubernetes that points to the AWS RDS instance
 	serviceInterface := k.Client.CoreV1().Services(namespace)
-
+	hostname := dbEndpoint.Hostname
 	s, sErr := serviceInterface.Get(hostname, metav1.GetOptions{})
 
 	create := false
@@ -48,7 +49,7 @@ func (k *Kube) CreateService(namespace string, hostname string, internalname str
 		s = &v1.Service{}
 		create = true
 	}
-	s = k.createServiceObj(s, namespace, hostname, internalname)
+	s = k.createServiceObj(s, namespace, dbEndpoint, internalname)
 	var err error
 	if create {
 		_, err = serviceInterface.Create(s)

@@ -51,18 +51,18 @@ func New(db *crd.Database, kc *kubernetes.Clientset) (*RDS, error) {
 
 // CreateDatabase creates a database from the CRD database object, is also ensures that the correct
 // subnets are created for the database so we can access it
-func (r *RDS) CreateDatabase(db *crd.Database) (string, error) {
+func (r *RDS) CreateDatabase(db *crd.Database) (*provider.DBEndpoint, error) {
 	// Ensure that the subnets for the DB is create or updated
 	log.Println("Trying to find the correct subnets")
 	subnetName, err := r.ensureSubnets(db)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	log.Printf("getting secret: Name: %v Key: %v \n", db.Spec.Password.Name, db.Spec.Password.Key)
 	svc, err := r.GetSecret(db.Namespace, db.Spec.Password.Name)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	input := convertSpecToInput(db, subnetName, r.SecurityGroups, string(svc.Data[db.Spec.Password.Key]))
 
@@ -77,24 +77,24 @@ func (r *RDS) CreateDatabase(db *crd.Database) (string, error) {
 		res := r.rdsclient().CreateDBInstanceRequest(input)
 		_, err = res.Send()
 		if err != nil {
-			return "", errors.Wrap(err, "CreateDBInstance")
+			return nil, errors.Wrap(err, "CreateDBInstance")
 		}
 	} else if err != nil {
-		return "", errors.Wrap(err, fmt.Sprintf("wasn't able to describe the db instance with id %v", input.DBInstanceIdentifier))
+		return nil, errors.Wrap(err, fmt.Sprintf("wasn't able to describe the db instance with id %v", input.DBInstanceIdentifier))
 	}
 	log.Printf("Waiting for db instance %v to become available\n", *input.DBInstanceIdentifier)
 	time.Sleep(5 * time.Second)
 	err = r.rdsclient().WaitUntilDBInstanceAvailable(k)
 	if err != nil {
-		return "", errors.Wrap(err, fmt.Sprintf("something went wrong in WaitUntilDBInstanceAvailable for db instance %v", input.DBInstanceIdentifier))
+		return nil, errors.Wrap(err, fmt.Sprintf("something went wrong in WaitUntilDBInstanceAvailable for db instance %v", input.DBInstanceIdentifier))
 	}
 
 	// Get the newly created database so we can get the endpoint
-	dbHostname, err := getEndpoint(input.DBInstanceIdentifier, r.rdsclient())
+	endpoint, err := getEndpoint(input.DBInstanceIdentifier, r.rdsclient())
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	return dbHostname, nil
+	return &provider.DBEndpoint{Hostname: *endpoint.Address, Port: *endpoint.Port}, nil
 }
 
 // ensureSubnets is ensuring that we have created or updated the subnet according to the data from the CRD object
@@ -130,17 +130,15 @@ func (r *RDS) ensureSubnets(db *crd.Database) (string, error) {
 	return subnetName, nil
 }
 
-func getEndpoint(dbName *string, svc *rds.RDS) (string, error) {
+func getEndpoint(dbName *string, svc *rds.RDS) (*rds.Endpoint, error) {
 	k := &rds.DescribeDBInstancesInput{DBInstanceIdentifier: dbName}
 	res := svc.DescribeDBInstancesRequest(k)
 	instance, err := res.Send()
 	if err != nil || len(instance.DBInstances) == 0 {
-		return "", fmt.Errorf("wasn't able to describe the db instance with id %v", dbName)
+		return nil, fmt.Errorf("wasn't able to describe the db instance with id %v", dbName)
 	}
 	rdsdb := instance.DBInstances[0]
-
-	dbHostname := *rdsdb.Endpoint.Address
-	return dbHostname, nil
+	return rdsdb.Endpoint, nil
 }
 
 // DeleteDatabase attempts to delete the RDS database
@@ -208,6 +206,7 @@ func convertSpecToInput(v *crd.Database, subnetName string, securityGroups []str
 		MultiAZ:               aws.Bool(v.Spec.MultiAZ),
 		StorageEncrypted:      aws.Bool(v.Spec.StorageEncrypted),
 		BackupRetentionPeriod: aws.Int64(v.Spec.BackupRetentionPeriod),
+		Port:                  aws.Int64(9432),
 	}
 	if v.Spec.StorageType != "" {
 		input.StorageType = aws.String(v.Spec.StorageType)

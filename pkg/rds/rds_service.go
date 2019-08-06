@@ -7,22 +7,24 @@ import (
 	"github.com/pkg/errors"
 	"github.com/pmacik/k8s-rds/pkg/crd"
 	"github.com/pmacik/k8s-rds/pkg/kube"
+	"github.com/pmacik/k8s-rds/pkg/provider"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
 // create an External named service object for Kubernetes
-func (k *RDS) createServiceObj(s *v1.Service, namespace string, hostname string, internalname string) *v1.Service {
+func (k *RDS) createServiceObj(s *v1.Service, namespace string, dbEndpoint *provider.DBEndpoint, internalname string) *v1.Service {
 	var ports []v1.ServicePort
 
+	dbPort := dbEndpoint.Port
 	ports = append(ports, v1.ServicePort{
 		Name:       fmt.Sprintf("pgsql"),
-		Port:       int32(5432),
-		TargetPort: intstr.IntOrString{IntVal: int32(5432)},
+		Port:       int32(dbPort),
+		TargetPort: intstr.IntOrString{IntVal: int32(dbPort)},
 	})
 	s.Spec.Type = "ExternalName"
-	s.Spec.ExternalName = hostname
+	s.Spec.ExternalName = dbEndpoint.Hostname
 
 	s.Spec.Ports = ports
 	s.Name = internalname
@@ -32,7 +34,7 @@ func (k *RDS) createServiceObj(s *v1.Service, namespace string, hostname string,
 }
 
 // CreateService Creates or updates a service in Kubernetes with the new information
-func (k *RDS) CreateService(namespace string, hostname string, internalname string, owner *crd.Database) (*v1.Service, error) {
+func (k *RDS) CreateService(namespace string, dbEndpoint *provider.DBEndpoint, internalname string, owner *crd.Database) (*v1.Service, error) {
 
 	// create a service in kubernetes that points to the AWS RDS instance
 	kubectl, err := kube.Client()
@@ -43,12 +45,13 @@ func (k *RDS) CreateService(namespace string, hostname string, internalname stri
 		"app": owner.GetName(),
 	}
 	serviceInterface := kubectl.CoreV1().Services(namespace)
+	log.Printf("DBEndpoint=%v", dbEndpoint)
 
-	s, sErr := serviceInterface.Get(hostname, metav1.GetOptions{})
+	s, sErr := serviceInterface.Get(dbEndpoint.Hostname, metav1.GetOptions{})
 	create := false
 	if sErr != nil {
 		s = &v1.Service{}
-		s = k.createServiceObj(s, namespace, hostname, internalname)
+		s = k.createServiceObj(s, namespace, dbEndpoint, internalname)
 		s.SetLabels(lbs)
 		ownerRef := metav1.OwnerReference{
 			APIVersion: crd.CRDVersion,

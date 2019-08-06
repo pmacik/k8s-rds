@@ -113,14 +113,20 @@ func execute(dbprovider string) {
 				}
 				crClient := client.NewCRClient(restClient, scheme, db.Namespace) // add the database namespace to the client
 				// create DB
-				hostname, err := handleCreateDatabase(db, crClient, &provider)
+				dbEndpoint, err := handleCreateDatabase(db, crClient, &provider)
 				if err != nil {
 					log.Printf("database creation failed: %v", err)
-					err := updateStatus(db.Name, crd.DatabaseStatus{Message: fmt.Sprintf("%v", err), State: Failed}, crClient)
+					status := crd.DatabaseStatus{
+						Message:            fmt.Sprintf("%v", err),
+						State:              "DBCreatingFailed",
+						DBConnectionConfig: "",
+						DBCredentials:      db.Spec.Password.Name,
+					}
+					err := updateStatus(db.Name, status, crClient)
 					if err != nil {
 						log.Printf("database CRD status update failed: %v", err)
-						return
 					}
+					return
 				}
 				status := crd.DatabaseStatus{
 					Message:            "DB Created - creating service",
@@ -134,8 +140,8 @@ func execute(dbprovider string) {
 					return
 				}
 				// create service
-				log.Printf("Creating service '%v' for %v\n", db.Name, hostname)
-				svc, err := provider.CreateService(db.Namespace, hostname, db.Name, db)
+				log.Printf("Creating service '%v' for %v\n", db.Name, dbEndpoint)
+				svc, err := provider.CreateService(db.Namespace, dbEndpoint, db.Name, db)
 				if err != nil {
 					if errors.IsAlreadyExists(err) {
 						log.Printf("Service %s already exists, moving on", db.Name)
@@ -222,20 +228,20 @@ func getProvider(db *crd.Database, dbprovider string) (provider.DatabaseProvider
 	return nil, fmt.Errorf("unable to find provider for %v", dbprovider)
 }
 
-func handleCreateDatabase(db *crd.Database, crClient *client.CRClient, dbProvider *provider.DatabaseProvider) (string, error) {
+func handleCreateDatabase(db *crd.Database, crClient *client.CRClient, dbProvider *provider.DatabaseProvider) (*provider.DBEndpoint, error) {
 	// validate dbname is only alpha numeric
-	err := updateStatus(db.Name, crd.DatabaseStatus{Message: "Creating", State: "Creating"}, crClient)
+	err := updateStatus(db.Name, crd.DatabaseStatus{Message: "Attempting to Create a DB", State: "DBCreating"}, crClient)
 	if err != nil {
-		return "", fmt.Errorf("database CR status update failed: %v", err)
+		return nil, fmt.Errorf("database CR status update failed: %v", err)
 	}
 
 	log.Println("Attempting to Create a DB")
 
-	hostname, err := (*dbProvider).CreateDatabase(db)
+	dbEndpoint, err := (*dbProvider).CreateDatabase(db)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	return hostname, nil
+	return dbEndpoint, nil
 }
 
 func ensureConfigMap(db *crd.Database, svc *v1.Service) (*v1.ConfigMap, error) {
