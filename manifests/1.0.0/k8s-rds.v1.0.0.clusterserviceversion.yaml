@@ -1,0 +1,116 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: ClusterServiceVersion
+metadata:
+  annotations:
+    capabilities: Basic Install
+  name: k8s-rds.v1.0.0
+  namespace: placeholder
+  annotations:
+    alm-examples: '[{"apiVersion":"k83-rds.pmacik.dev/v1alpha1","kind":"Database","metadata":{},"spec":{}}]'
+    capabilities: Basic Install
+    categories: 'Database'
+    containerImage: quay.io/pmacik/k8s-rds-operator:1.0.0
+    createdAt: ''
+    description: The operator that manages RDS databases.
+    repository: https://github.com/pmacik/k8s-rds-operator
+spec:
+  apiservicedefinitions: {}
+  customresourcedefinitions: {}
+  description: Placeholder description
+  displayName: K8s Rds
+  install:
+    spec:
+      maintainers:
+        - email: pavel.macik@gmail.com
+          name: Pavel Macík
+      maturity: alpha
+      provider:
+        name: Red Hat
+      links:
+        - name: Source Code
+          url: https://github.com/pmacik/kbs-rds-operator
+      labels:
+        name: k8s-rds-operator
+      selector:
+        matchLabels:
+          name: k8s-rdsl-operator
+      clusterPermissions:
+      - rules:
+        - apiGroups:
+          - apiextensions.k8s.io
+          resources:
+          - customresourcedefinitions
+          verbs:
+          - '*'
+        - apiGroups:
+          - k8s.io
+          resources:
+          - databases
+          verbs:
+          - '*'
+        - apiGroups:
+          - ""
+          resources:
+          - secrets
+          verbs:
+          - get
+        - apiGroups:
+          - ""
+          resources:
+          - services
+          verbs:
+          - get
+          - create
+          - update
+          - delete
+        - apiGroups:
+          - ""
+          resources:
+          - nodes
+          verbs:
+          - list
+          - watch
+        - apiGroups:
+          - ""
+          resources:
+          - namespaces
+          verbs:
+          - get
+          - list
+          - watch
+        serviceAccountName: k8s-rds-operator
+      deployments:
+      - name: k8s-rds
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              name: k8s-rds
+          strategy: {}
+          template:
+            metadata:
+              labels:
+                name: k8s-rds
+            spec:
+              containers:
+              - image: sorenmat/k8s-rds:latest
+                imagePullPolicy: Always
+                name: k8s-rds
+                resources: {}
+              restartPolicy: Always
+              securityContext:
+                runAsNonRoot: true
+                runAsUser: 65534
+    strategy: deployment
+  installModes:
+  - supported: true
+    type: OwnNamespace
+  - supported: true
+    type: SingleNamespace
+  - supported: false
+    type: MultiNamespace
+  - supported: true
+    type: AllNamespaces
+  maturity: alpha
+  provider: {}
+  version: 1.0.0
